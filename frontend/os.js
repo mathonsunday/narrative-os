@@ -94,10 +94,6 @@ function handleBackendEvent(event) {
       handleChaosRename(event);
       break;
       
-    case 'chaos_organize':
-      handleChaosOrganize(event);
-      break;
-      
     case 'chaos_notification':
       handleChaosNotification(event);
       break;
@@ -180,31 +176,6 @@ function handleChaosRename(event) {
   
   showToast(event.message);
   addJournalEntry(`Renamed "${oldName}" to "${newName}". ${event.message}`);
-}
-
-function handleChaosOrganize(event) {
-  // Backend moved a file to an organization folder
-  const filename = event.filename;
-  const folder = event.folder;
-  const file = state.files.find(f => f.name === filename);
-  
-  if (file) {
-    // For now, just remove from desktop (it's in a folder now)
-    removeFile(file.id);
-  }
-  
-  // Make sure the folder exists on desktop
-  if (!state.files.find(f => f.name === folder + '/')) {
-    addFile({
-      name: folder + '/',
-      icon: '📁',
-      x: randomInt(60, 400),
-      y: randomInt(140, 500)
-    });
-  }
-  
-  showToast(event.message);
-  addJournalEntry(`Moved "${filename}" to "${folder}". ${event.message}`);
 }
 
 function handleChaosNotification(event) {
@@ -1241,15 +1212,6 @@ function runChaosEvent() {
         const newName = randomChoice(REPLACEMENT_NAMES);
         renameFile(file.id, newName);
         showToast(`"${oldName}" was renamed to "${newName}" - organized for you`);
-      }
-    }},
-    
-    // Remove file (moved somewhere "better")
-    { weight: 1, action: () => {
-      if (state.files.length > 4) {
-        const file = randomChoice(state.files);
-        showToast(`"${file.name}" was archived - we detected you weren't using it frequently`);
-        removeFile(file.id);
       }
     }},
     
