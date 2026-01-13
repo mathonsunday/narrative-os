@@ -25,7 +25,7 @@ All scenes feature:
 
 ### Visual Effects Library
 
-Built using the [visual-toolkit](https://github.com/veronica.ray/visual-toolkit) library, which provides:
+Built using the [visual-toolkit](https://github.com/mathonsunday/visual-toolkit) library, which provides:
 
 - Deep-sea color palettes (`deepSea`, `bioluminescence`, `darkness`)
 - Organic motion functions (`drift`, `bob`, `pulse`, `waver`)
@@ -36,7 +36,7 @@ Built using the [visual-toolkit](https://github.com/veronica.ray/visual-toolkit)
 
 ### Audio Engine
 
-Ambient deep-sea soundscape powered by [music-playground](https://github.com/veronica.ray/music-playground):
+Ambient deep-sea soundscape powered by [music-playground](https://github.com/mathonsunday/music-playground):
 
 - Deep sea ambience (configurable depth, intensity, mystery tones)
 - Hydrophone crackle and static
@@ -88,8 +88,8 @@ The frontend is vanilla JavaScript with Canvas API. The backend is Python with W
 - **Frontend**: Vanilla JavaScript, Canvas API, Web Audio API
 - **Backend**: Python with WebSocket server
 - **Containerization**: Docker for isolated filesystem
-- **Visual Library**: [visual-toolkit](https://github.com/veronica.ray/visual-toolkit)
-- **Audio Library**: [music-playground](https://github.com/veronica.ray/music-playground)
+- **Visual Library**: [visual-toolkit](https://github.com/mathonsunday/visual-toolkit)
+- **Audio Library**: [music-playground](https://github.com/mathonsunday/music-playground)
 
 ## File Structure
 
@@ -110,8 +110,8 @@ narrative-os/
 
 ## Credits
 
-- Visual effects powered by [visual-toolkit](https://github.com/veronica.ray/visual-toolkit)
-- Audio engine adapted from [music-playground](https://github.com/veronica.ray/music-playground)
+- Visual effects powered by [visual-toolkit](https://github.com/mathonsunday/visual-toolkit)
+- Audio engine adapted from [music-playground](https://github.com/mathonsunday/music-playground)
 - Inspired by experimental OS interfaces and narrative-driven design
 
 ## License
