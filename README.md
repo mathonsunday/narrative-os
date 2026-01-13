@@ -36,7 +36,8 @@ Built using the [visual-toolkit](https://github.com/veronica.ray/visual-toolkit)
 
 ### Audio Engine
 
-Ambient deep-sea soundscape with:
+Ambient deep-sea soundscape powered by [music-playground](https://github.com/veronica.ray/music-playground):
+
 - Deep sea ambience (configurable depth, intensity, mystery tones)
 - Hydrophone crackle and static
 - ROV mechanical hum
@@ -88,6 +89,7 @@ The frontend is vanilla JavaScript with Canvas API. The backend is Python with W
 - **Backend**: Python with WebSocket server
 - **Containerization**: Docker for isolated filesystem
 - **Visual Library**: [visual-toolkit](https://github.com/veronica.ray/visual-toolkit)
+- **Audio Library**: [music-playground](https://github.com/veronica.ray/music-playground)
 
 ## File Structure
 
@@ -109,7 +111,7 @@ narrative-os/
 ## Credits
 
 - Visual effects powered by [visual-toolkit](https://github.com/veronica.ray/visual-toolkit)
-- Audio engine adapted from music-playground
+- Audio engine adapted from [music-playground](https://github.com/veronica.ray/music-playground)
 - Inspired by experimental OS interfaces and narrative-driven design
 
 ## License
