@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Narrative OS - Cottage (Integrated Pixel Art)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-cream: #fef6e8;
+      --bg-pink: #fff0f5;
+      --wall-peach: #ffe4d6;
+      --wall-lavender: #e8dff5;
+      
+      --purple-bright: #9b6dff;
+      --purple-soft: #c4a7e7;
+      --pink-bright: #ff7eb3;
+      --pink-soft: #ffb3d9;
+      --teal: #5bcfcf;
+      --teal-soft: #a8e6e6;
+      --yellow-warm: #ffd166;
+      --green-leaf: #7bc47f;
+      --orange-warm: #ffb347;
+      
+      --text-dark: #4a4063;
+      --text-medium: #7a6b8a;
+      --shadow-soft: rgba(74, 64, 99, 0.15);
+      --shadow-medium: rgba(74, 64, 99, 0.25);
+    }
+
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background: var(--bg-cream);
+      overflow: hidden;
+      height: 100vh;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    .desktop {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      background: linear-gradient(180deg, var(--wall-lavender) 0%, var(--wall-peach) 50%, var(--bg-cream) 100%);
+      padding: 30px;
+      padding-bottom: 90px;
+    }
+
+    /* Subtle pixel pattern overlay - ties pixel elements to background */
+    .desktop::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(90deg, rgba(155,109,255,0.03) 1px, transparent 1px),
+        linear-gradient(rgba(155,109,255,0.03) 1px, transparent 1px);
+      background-size: 8px 8px;
+      pointer-events: none;
+    }
+
+    /* =============================================
+       PIXEL ART DEFINITIONS
+       ============================================= */
+    
+    /* Base pixel unit - scale everything from this */
+    .pixel { 
+      image-rendering: pixelated;
+    }
+
+    /* Pixel Potion - Purple */
+    .pixel-potion-purple {
+      width: 3px; height: 3px;
+      transform: scale(4);
+      transform-origin: top left;
+      box-shadow:
+        /* Cork */
+        3px 0 #8b5a2b, 6px 0 #6b4423,
+        3px 3px #a0522d, 6px 3px #8b5a2b,
+        /* Neck */
+        3px 6px #d8bfd8, 6px 6px #b8a0b8,
+        /* Body */
+        0 9px #d8bfd8, 3px 9px #9b6dff, 6px 9px #7c4dff, 9px 9px #b8a0b8,
+        0 12px #b8a0b8, 3px 12px #7c4dff, 6px 12px #6200ea, 9px 12px #9b6dff,
+        0 15px #b8a0b8, 3px 15px #6200ea, 6px 15px #4a0080, 9px 15px #7c4dff,
+        3px 18px #9b6dff, 6px 18px #6200ea;
+    }
+
+    /* Pixel Potion - Teal */
+    .pixel-potion-teal {
+      width: 3px; height: 3px;
+      transform: scale(4);
+      transform-origin: top left;
+      box-shadow:
+        3px 0 #8b5a2b, 6px 0 #6b4423,
+        3px 3px #a0522d, 6px 3px #8b5a2b,
+        3px 6px #b0e0e6, 6px 6px #87ceeb,
+        0 9px #b0e0e6, 3px 9px #5bcfcf, 6px 9px #40b4b4, 9px 9px #87ceeb,
+        0 12px #87ceeb, 3px 12px #40b4b4, 6px 12px #2d9999, 9px 12px #5bcfcf,
+        0 15px #87ceeb, 3px 15px #2d9999, 6px 15px #1a7a7a, 9px 15px #40b4b4,
+        3px 18px #5bcfcf, 6px 18px #2d9999;
+    }
+
+    /* Pixel Potion - Pink */
+    .pixel-potion-pink {
+      width: 3px; height: 3px;
+      transform: scale(4);
+      transform-origin: top left;
+      box-shadow:
+        3px 0 #8b5a2b, 6px 0 #6b4423,
+        3px 3px #a0522d, 6px 3px #8b5a2b,
+        3px 6px #ffe4ec, 6px 6px #ffb3d0,
+        0 9px #ffe4ec, 3px 9px #ff7eb3, 6px 9px #ff5a9d, 9px 9px #ffb3d0,
+        0 12px #ffb3d0, 3px 12px #ff5a9d, 6px 12px #e6457f, 9px 12px #ff7eb3,
+        0 15px #ffb3d0, 3px 15px #e6457f, 6px 15px #cc2d66, 9px 15px #ff5a9d,
+        3px 18px #ff7eb3, 6px 18px #e6457f;
+    }
+
+    /* Pixel Mushroom */
+    .pixel-mushroom {
+      width: 3px; height: 3px;
+      transform: scale(3);
+      transform-origin: top left;
+      box-shadow:
+        /* Cap top */
+        6px 0 #e74c3c, 9px 0 #e74c3c, 12px 0 #e74c3c,
+        3px 3px #c0392b, 6px 3px #e74c3c, 9px 3px #fff, 12px 3px #e74c3c, 15px 3px #c0392b,
+        0 6px #c0392b, 3px 6px #e74c3c, 6px 6px #fff, 9px 6px #e74c3c, 12px 6px #e74c3c, 15px 6px #fff, 18px 6px #c0392b,
+        0 9px #c0392b, 3px 9px #e74c3c, 6px 9px #e74c3c, 9px 9px #e74c3c, 12px 9px #e74c3c, 15px 9px #e74c3c, 18px 9px #c0392b,
+        /* Stem */
+        6px 12px #f5deb3, 9px 12px #fffacd, 12px 12px #deb887,
+        6px 15px #f5deb3, 9px 15px #fffacd, 12px 15px #deb887,
+        3px 18px #deb887, 6px 18px #f5deb3, 9px 18px #fffacd, 12px 18px #deb887, 15px 18px #deb887;
+    }
+
+    /* Pixel Crystal */
+    .pixel-crystal {
+      width: 3px; height: 3px;
+      transform: scale(3);
+      transform-origin: top left;
+      box-shadow:
+        6px 0 #9b6dff,
+        3px 3px #b388ff, 6px 3px #e0d0ff, 9px 3px #9b6dff,
+        0 6px #9b6dff, 3px 6px #c4a7e7, 6px 6px #fff, 9px 6px #b388ff, 12px 6px #7c4dff,
+        0 9px #7c4dff, 3px 9px #9b6dff, 6px 9px #c4a7e7, 9px 9px #9b6dff, 12px 9px #6200ea,
+        3px 12px #6200ea, 6px 12px #7c4dff, 9px 12px #6200ea,
+        6px 15px #4a0080;
+    }
+
+    /* Pixel Heart */
+    .pixel-heart {
+      width: 3px; height: 3px;
+      transform: scale(3);
+      transform-origin: top left;
+      box-shadow:
+        3px 0 #ff6b8a, 6px 0 #ff6b8a, 12px 0 #ff6b8a, 15px 0 #ff6b8a,
+        0 3px #ff6b8a, 3px 3px #ffb3c6, 6px 3px #ff6b8a, 9px 3px #ff6b8a, 12px 3px #ffb3c6, 15px 3px #ff6b8a, 18px 3px #ff6b8a,
+        0 6px #ff6b8a, 3px 6px #ff6b8a, 6px 6px #ff6b8a, 9px 6px #ff6b8a, 12px 6px #ff6b8a, 15px 6px #ff6b8a, 18px 6px #ff6b8a,
+        3px 9px #e6457f, 6px 9px #ff6b8a, 9px 9px #ff6b8a, 12px 9px #ff6b8a, 15px 9px #e6457f,
+        6px 12px #e6457f, 9px 12px #ff6b8a, 12px 12px #e6457f,
+        9px 15px #cc2d66;
+    }
+
+    /* Pixel Book */
+    .pixel-book {
+      width: 3px; height: 3px;
+      transform: scale(3);
+      transform-origin: top left;
+      box-shadow:
+        0 0 #8b4513, 3px 0 #a0522d, 6px 0 #a0522d, 9px 0 #a0522d, 12px 0 #8b4513,
+        0 3px #8b4513, 3px 3px #deb887, 6px 3px #f5deb3, 9px 3px #deb887, 12px 3px #8b4513,
+        0 6px #8b4513, 3px 6px #f5deb3, 6px 6px #2d2d2d, 9px 6px #f5deb3, 12px 6px #8b4513,
+        0 9px #8b4513, 3px 9px #deb887, 6px 9px #f5deb3, 9px 9px #deb887, 12px 9px #8b4513,
+        0 12px #6b3a1a, 3px 12px #8b4513, 6px 12px #8b4513, 9px 12px #8b4513, 12px 12px #6b3a1a;
+    }
+
+    /* Pixel Scroll */
+    .pixel-scroll {
+      width: 3px; height: 3px;
+      transform: scale(3);
+      transform-origin: top left;
+      box-shadow:
+        3px 0 #d4a574, 6px 0 #f5deb3, 9px 0 #d4a574,
+        0 3px #d4a574, 3px 3px #f5deb3, 6px 3px #fffacd, 9px 3px #f5deb3, 12px 3px #d4a574,
+        0 6px #b8956a, 3px 6px #f5deb3, 6px 6px #2d2d2d, 9px 6px #f5deb3, 12px 6px #b8956a,
+        0 9px #b8956a, 3px 9px #f5deb3, 6px 9px #2d2d2d, 9px 9px #f5deb3, 12px 9px #b8956a,
+        0 12px #d4a574, 3px 12px #f5deb3, 6px 12px #fffacd, 9px 12px #f5deb3, 12px 12px #d4a574,
+        3px 15px #d4a574, 6px 15px #f5deb3, 9px 15px #d4a574;
+    }
+
+    /* =============================================
+       PIXEL EFFECTS (Canvas-based)
+       ============================================= */
+    
+    .sparkle-canvas {
+      position: absolute;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* =============================================
+       UI ELEMENTS (CSS - complements pixel art)
+       ============================================= */
+
+    /* File icons - container for pixel art */
+    #files-container {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    .file-icon {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: grab;
+      transition: transform 0.2s ease;
+      user-select: none;
+      pointer-events: auto;
+    }
+
+    .file-icon:hover {
+      transform: scale(1.1);
+    }
+
+    /* Icon container - soft bg that frames the pixel art */
+    .file-icon .icon-frame {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,240,245,0.9) 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 
+        0 4px 12px var(--shadow-soft),
+        inset 0 1px 0 rgba(255,255,255,0.8);
+      border: 2px solid rgba(155, 109, 255, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle scanline effect on icon frames */
+    .file-icon .icon-frame::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 2px,
+        rgba(0,0,0,0.02) 2px,
+        rgba(0,0,0,0.02) 4px
+      );
+      pointer-events: none;
+    }
+
+    .file-icon .label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dark);
+      text-align: center;
+      margin-top: 8px;
+      max-width: 90px;
+      background: rgba(255,255,255,0.9);
+      padding: 4px 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px var(--shadow-soft);
+    }
+
+    /* Greeting */
+    .greeting {
+      position: absolute;
+      top: 25px;
+      left: 30px;
+      z-index: 5;
+    }
+
+    .greeting-text {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--purple-bright);
+      text-shadow: 2px 2px 0 rgba(255,255,255,0.8);
+    }
+
+    .greeting-sub {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-medium);
+      margin-top: 4px;
+    }
+
+    /* Windows */
+    #windows-container {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .window {
+      position: absolute;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px var(--shadow-medium);
+      overflow: hidden;
+      min-width: 300px;
+      pointer-events: auto;
+    }
+
+    .window-header {
+      background: linear-gradient(90deg, var(--purple-soft) 0%, var(--pink-soft) 100%);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .window-control {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .control-close { background: #ff7b7b; }
+    .control-min { background: var(--yellow-warm); }
+    .control-max { background: var(--green-leaf); }
+
+    .window-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-dark);
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Pixel icon in window title */
+    .window-title .pixel-icon {
+      transform: scale(2);
+      transform-origin: left center;
+      margin-right: 12px;
+    }
+
+    .window-content {
+      padding: 16px;
+      font-size: 13px;
+      color: var(--text-dark);
+      line-height: 1.6;
+    }
+
+    /* Journal */
+    .journal-window {
+      width: 320px;
+      right: 40px;
+      top: 240px;
+    }
+
+    .journal-entry {
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background: var(--bg-cream);
+      border-radius: 10px;
+      border-left: 3px solid var(--purple-soft);
+    }
+
+    .journal-time {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-medium);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .journal-text {
+      font-size: 12px;
+      color: var(--text-medium);
+    }
+
+    /* Clock */
+    .clock {
+      position: absolute;
+      bottom: 100px;
+      left: 30px;
+      z-index: 5;
+      background: rgba(255,255,255,0.95);
+      padding: 12px 20px;
+      border-radius: 14px;
+      box-shadow: 0 4px 12px var(--shadow-soft);
+    }
+
+    .clock-time {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--purple-bright);
+    }
+
+    .clock-phase {
+      font-size: 11px;
+      color: var(--text-medium);
+      margin-top: 2px;
+    }
+
+    /* Taskbar */
+    .taskbar {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.95);
+      border: 2px solid rgba(155,109,255,0.2);
+      border-bottom: none;
+      border-radius: 16px 16px 0 0;
+      padding: 10px 20px;
+      display: flex;
+      gap: 8px;
+      box-shadow: 0 -4px 20px var(--shadow-soft);
+      z-index: 20;
+    }
+
+    .taskbar-item {
+      width: 52px;
+      height: 52px;
+      background: linear-gradient(135deg, #fff 0%, var(--bg-pink) 100%);
+      border: 2px solid rgba(155,109,255,0.15);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px var(--shadow-soft);
+    }
+
+    .taskbar-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 12px var(--shadow-medium);
+      border-color: var(--purple-soft);
+    }
+
+    /* Decorative pixel elements */
+    .decoration {
+      position: absolute;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+    }
+
+    .toast {
+      background: #fff;
+      border: 2px solid var(--purple-soft);
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-dark);
+      box-shadow: 0 8px 24px var(--shadow-medium);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: toast-in 0.4s ease;
+    }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-20px) scale(0.9); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="desktop">
+    <!-- Sparkle effect canvas -->
+    <canvas id="sparkles" class="sparkle-canvas"></canvas>
+
+    <!-- Greeting -->
+    <div class="greeting">
+      <div class="greeting-text">Good morning, little witch!</div>
+      <div class="greeting-sub">Your potions are brewing nicely ✨</div>
+    </div>
+
+    <!-- Decorative pixel elements scattered around -->
+    <div class="decoration" style="top: 60px; right: 200px;">
+      <div class="pixel-crystal"></div>
+    </div>
+    <div class="decoration" style="bottom: 200px; left: 140px;">
+      <div class="pixel-mushroom"></div>
+    </div>
+    <div class="decoration" style="top: 120px; left: 280px;">
+      <div class="pixel-heart"></div>
+    </div>
+
+    <!-- Potion shelf decoration -->
+    <div class="decoration" style="top: 80px; right: 60px; display: flex; gap: 20px;">
+      <div class="pixel-potion-purple"></div>
+      <div class="pixel-potion-teal"></div>
+      <div class="pixel-potion-pink"></div>
+    </div>
+
+    <!-- Files with pixel art icons -->
+    <div id="files-container">
+      <div class="file-icon" style="left: 50px; top: 180px;">
+        <div class="icon-frame">
+          <div class="pixel-scroll"></div>
+        </div>
+        <div class="label">spell_notes.txt</div>
+      </div>
+
+      <div class="file-icon" style="left: 50px; top: 320px;">
+        <div class="icon-frame">
+          <div class="pixel-potion-purple"></div>
+        </div>
+        <div class="label">potions/</div>
+      </div>
+
+      <div class="file-icon" style="left: 170px; top: 180px;">
+        <div class="icon-frame">
+          <div class="pixel-mushroom"></div>
+        </div>
+        <div class="label">herb_garden.csv</div>
+      </div>
+
+      <div class="file-icon" style="left: 170px; top: 320px;">
+        <div class="icon-frame">
+          <div class="pixel-book"></div>
+        </div>
+        <div class="label">grimoire.docx</div>
+      </div>
+
+      <div class="file-icon" style="left: 290px; top: 180px;">
+        <div class="icon-frame">
+          <div class="pixel-crystal"></div>
+        </div>
+        <div class="label">readings/</div>
+      </div>
+
+      <div class="file-icon" style="left: 290px; top: 320px;">
+        <div class="icon-frame">
+          <div class="pixel-heart"></div>
+        </div>
+        <div class="label">favorites/</div>
+      </div>
+    </div>
+
+    <!-- Windows -->
+    <div id="windows-container">
+      <div class="window journal-window">
+        <div class="window-header">
+          <div class="window-controls">
+            <div class="window-control control-close"></div>
+            <div class="window-control control-min"></div>
+            <div class="window-control control-max"></div>
+          </div>
+          <div class="window-title">
+            <span class="pixel-icon"><div class="pixel-book" style="transform: scale(2);"></div></span>
+            <span style="margin-left: 20px;">Daily Notes</span>
+          </div>
+        </div>
+        <div class="window-content">
+          <div class="journal-entry">
+            <div class="journal-time">Just now</div>
+            <div class="journal-text">The lavender is ready! Don't forget to dry it properly this time.</div>
+          </div>
+          <div class="journal-entry">
+            <div class="journal-time">Earlier</div>
+            <div class="journal-text">Mrs. Willowmere's calming tea worked perfectly. She left extra honey! 🍯</div>
+          </div>
+          <div class="journal-entry">
+            <div class="journal-time">Yesterday</div>
+            <div class="journal-text">Note: The sleep potion needs MORE chamomile, not less.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clock -->
+    <div class="clock">
+      <div class="clock-time" id="clock-time">9:42</div>
+      <div class="clock-phase" id="clock-phase">🌙 Waning Crescent</div>
+    </div>
+
+    <!-- Taskbar with pixel icons -->
+    <div class="taskbar">
+      <div class="taskbar-item"><div class="pixel-heart" style="transform: scale(2);"></div></div>
+      <div class="taskbar-item"><div class="pixel-book" style="transform: scale(2);"></div></div>
+      <div class="taskbar-item"><div class="pixel-mushroom" style="transform: scale(2);"></div></div>
+      <div class="taskbar-item"><div class="pixel-crystal" style="transform: scale(2);"></div></div>
+      <div class="taskbar-item"><div class="pixel-potion-teal" style="transform: scale(2.5);"></div></div>
+    </div>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toast-container"></div>
+  </div>
+
+  <script>
+    // Sparkle effect system
+    const canvas = document.getElementById('sparkles');
+    const ctx = canvas.getContext('2d');
+    
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const sparkles = [];
+    const SPARKLE_COLORS = ['#ffd700', '#ff7eb3', '#9b6dff', '#5bcfcf'];
+
+    function createSparkle(x, y) {
+      return {
+        x: x || Math.random() * canvas.width,
+        y: y || Math.random() * canvas.height,
+        size: Math.random() * 3 + 2,
+        life: 1,
+        decay: Math.random() * 0.02 + 0.01,
+        color: SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)],
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5 - 0.3
+      };
+    }
+
+    // Initial sparkles
+    for (let i = 0; i < 15; i++) {
+      sparkles.push(createSparkle());
+    }
+
+    function drawPixelSparkle(x, y, size, color, alpha) {
+      ctx.fillStyle = color;
+      ctx.globalAlpha = alpha;
+      
+      // 4-pointed star shape, pixel style
+      const s = Math.floor(size);
+      const cx = Math.floor(x);
+      const cy = Math.floor(y);
+      
+      // Center
+      ctx.fillRect(cx, cy, 2, 2);
+      // Arms
+      ctx.fillRect(cx - s, cy, 2, 2);
+      ctx.fillRect(cx + s, cy, 2, 2);
+      ctx.fillRect(cx, cy - s, 2, 2);
+      ctx.fillRect(cx, cy + s, 2, 2);
+      // Diagonals (smaller)
+      if (s > 2) {
+        const d = Math.floor(s * 0.6);
+        ctx.fillRect(cx - d, cy - d, 2, 2);
+        ctx.fillRect(cx + d, cy - d, 2, 2);
+        ctx.fillRect(cx - d, cy + d, 2, 2);
+        ctx.fillRect(cx + d, cy + d, 2, 2);
+      }
+      
+      ctx.globalAlpha = 1;
+    }
+
+    function animateSparkles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      for (let i = sparkles.length - 1; i >= 0; i--) {
+        const s = sparkles[i];
+        
+        s.x += s.vx;
+        s.y += s.vy;
+        s.life -= s.decay;
+        
+        if (s.life <= 0) {
+          sparkles.splice(i, 1);
+          sparkles.push(createSparkle());
+        } else {
+          const pulse = Math.sin(Date.now() * 0.01 + i) * 0.3 + 0.7;
+          drawPixelSparkle(s.x, s.y, s.size * pulse, s.color, s.life);
+        }
+      }
+      
+      requestAnimationFrame(animateSparkles);
+    }
+    animateSparkles();
+
+    // Clock
+    function updateClock() {
+      const now = new Date();
+      const h = now.getHours() % 12 || 12;
+      const m = now.getMinutes().toString().padStart(2, '0');
+      
+      const phases = ['🌑 New Moon', '🌒 Waxing Crescent', '🌓 First Quarter', '🌔 Waxing Gibbous', 
+                      '🌕 Full Moon', '🌖 Waning Gibbous', '🌗 Last Quarter', '🌘 Waning Crescent'];
+      const phase = phases[Math.floor(now.getDate() / 4) % 8];
+      
+      document.getElementById('clock-time').textContent = `${h}:${m}`;
+      document.getElementById('clock-phase').textContent = phase;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Demo toast with pixel sparkle
+    setTimeout(() => {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = '<div class="pixel-heart" style="transform: scale(2);"></div> <span style="margin-left: 12px;">Your chamomile is ready for picking!</span>';
+      document.getElementById('toast-container').appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }, 2000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+# Narrative OS Backend Dependencies
+
+# WebSocket server for real-time events
+websockets>=12.0
+
+# Filesystem watching (cross-platform inotify wrapper)
+watchdog>=4.0
+
+# Async file operations
+aiofiles>=23.0

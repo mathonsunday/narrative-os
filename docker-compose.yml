@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  narrative-os:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"    # HTTP (frontend)
+      - "8765:8765"    # WebSocket (events)
+    volumes:
+      # Mount the frontend for live reloading during development
+      - ./frontend:/opt/narrative-os/frontend:ro
+      # Persist the user's "home directory" between restarts
+      - narrative-os-home:/home/mira
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+volumes:
+  narrative-os-home:
+    # The user's files persist here
