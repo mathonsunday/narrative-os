@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Narrative OS</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --abyss-black: #010508;
+      --abyss-deep: #030a12;
+      --abyss-mid: #051420;
+      --bio-cyan: #4dd0e1;
+      --bio-blue: #29b6f6;
+      --bio-glow: rgba(77, 208, 225, 0.6);
+      --bio-glow-dim: rgba(77, 208, 225, 0.15);
+      --text-primary: rgba(200, 230, 255, 0.9);
+      --text-secondary: rgba(150, 200, 230, 0.6);
+      --text-muted: rgba(100, 150, 180, 0.4);
+      --accent-red: rgba(255, 100, 100, 0.7);
+      --accent-yellow: rgba(255, 200, 100, 0.7);
+      --accent-green: rgba(100, 255, 150, 0.7);
+    }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--abyss-black);
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* Desktop */
+    .desktop {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      padding: 30px;
+      padding-bottom: 80px;
+      background: 
+        radial-gradient(ellipse at 30% 70%, rgba(5, 30, 60, 0.4) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 30%, rgba(10, 40, 70, 0.3) 0%, transparent 40%),
+        linear-gradient(180deg, var(--abyss-deep) 0%, var(--abyss-black) 100%);
+    }
+
+    /* Greeting */
+    .greeting {
+      position: absolute;
+      top: 30px;
+      left: 30px;
+      font-size: 18px;
+      font-weight: 300;
+      color: var(--text-primary);
+      letter-spacing: 0.1em;
+      animation: fadeIn 1s ease;
+      z-index: 5;
+    }
+
+    .greeting-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      font-weight: 300;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Marine snow particles */
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(180, 220, 255, 0.3);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: drift 15s linear infinite;
+    }
+
+    .particle:nth-child(odd) {
+      width: 3px;
+      height: 3px;
+      background: rgba(150, 200, 230, 0.2);
+      animation-duration: 20s;
+    }
+
+    @keyframes drift {
+      0% { transform: translateY(-20px) translateX(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 0.5; }
+      100% { transform: translateY(100vh) translateX(30px); opacity: 0; }
+    }
+
+    /* File/window containers - ensure windows are always above files */
+    #files-container {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    #windows-container {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* File icons - bioluminescent orbs */
+    .file-icon {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: grab;
+      transition: all 0.4s ease;
+      user-select: none;
+      z-index: 1;
+      pointer-events: auto;
+    }
+
+    .file-icon:hover {
+      transform: scale(1.1);
+    }
+
+    .file-icon:active {
+      cursor: grabbing;
+    }
+
+    .file-icon .icon {
+      width: 60px;
+      height: 60px;
+      background: radial-gradient(
+        circle at 40% 40%,
+        rgba(77, 208, 225, 0.3) 0%,
+        rgba(41, 182, 246, 0.15) 40%,
+        rgba(20, 80, 120, 0.1) 70%,
+        transparent 100%
+      );
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 
+        0 0 30px var(--bio-glow),
+        0 0 60px rgba(77, 208, 225, 0.2),
+        inset 0 0 20px rgba(77, 208, 225, 0.1);
+      animation: pulse 4s ease-in-out infinite;
+      border: 1px solid rgba(77, 208, 225, 0.2);
+      margin-bottom: 10px;
+    }
+
+    .file-icon:nth-child(odd) .icon {
+      animation-delay: -2s;
+    }
+
+    @keyframes pulse {
+      0%, 100% { 
+        box-shadow: 
+          0 0 30px var(--bio-glow),
+          0 0 60px rgba(77, 208, 225, 0.2);
+      }
+      50% { 
+        box-shadow: 
+          0 0 40px var(--bio-glow),
+          0 0 80px rgba(77, 208, 225, 0.3);
+      }
+    }
+
+    .file-icon .label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 140px;
+      letter-spacing: 0.05em;
+      line-height: 1.3;
+      word-break: break-word;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .file-icon .badge {
+      position: absolute;
+      top: -5px;
+      right: 5px;
+      background: var(--bio-cyan);
+      color: var(--abyss-black);
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-weight: 500;
+    }
+
+    /* Walking file */
+    .file-icon.walking {
+      animation: walk 25s linear infinite;
+    }
+
+    .file-icon.walking .icon {
+      animation: pulse 4s ease-in-out infinite, wobble 2s ease-in-out infinite;
+    }
+
+    @keyframes wobble {
+      0%, 100% { transform: rotate(-3deg); }
+      50% { transform: rotate(3deg); }
+    }
+
+    /* File appearing */
+    .file-icon.appearing {
+      animation: appear 0.5s ease forwards;
+    }
+
+    @keyframes appear {
+      from { opacity: 0; transform: scale(0.5); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* File disappearing */
+    .file-icon.disappearing {
+      animation: disappear 0.5s ease forwards;
+    }
+
+    @keyframes disappear {
+      from { opacity: 1; transform: scale(1); }
+      to { opacity: 0; transform: scale(0.5); }
+    }
+
+    /* Window - ROV instrument panel style */
+    .window {
+      position: absolute;
+      background: rgba(5, 15, 25, 0.95);
+      border: 1px solid rgba(77, 208, 225, 0.3);
+      border-radius: 8px;
+      box-shadow: 
+        0 0 40px rgba(0, 0, 0, 0.8),
+        inset 0 1px 0 rgba(77, 208, 225, 0.1);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+      min-width: 280px;
+      min-height: 200px;
+      z-index: 10;
+      pointer-events: auto;
+    }
+
+    /* Resize handle */
+    .window-resize {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 20px;
+      height: 20px;
+      cursor: nwse-resize;
+      background: linear-gradient(
+        135deg,
+        transparent 50%,
+        rgba(77, 208, 225, 0.3) 50%,
+        rgba(77, 208, 225, 0.3) 60%,
+        transparent 60%,
+        transparent 70%,
+        rgba(77, 208, 225, 0.3) 70%,
+        rgba(77, 208, 225, 0.3) 80%,
+        transparent 80%
+      );
+      opacity: 0.5;
+      border-radius: 0 0 8px 0;
+      transition: opacity 0.2s;
+    }
+
+    .window-resize:hover {
+      opacity: 0.8;
+    }
+
+    .window.opening {
+      animation: windowOpen 0.4s ease forwards;
+    }
+
+    @keyframes windowOpen {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .window-header {
+      background: linear-gradient(180deg, rgba(20, 50, 80, 0.6) 0%, rgba(10, 30, 50, 0.4) 100%);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid rgba(77, 208, 225, 0.2);
+      border-radius: 8px 8px 0 0;
+      cursor: grab;
+      user-select: none;
+    }
+
+    .window-header:active {
+      cursor: grabbing;
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .window-control {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+
+    .window-control:hover {
+      transform: scale(1.1);
+      opacity: 1;
+    }
+
+    .control-close { background: var(--accent-red); }
+    .control-minimize { background: var(--accent-yellow); }
+    .control-maximize { background: var(--accent-green); }
+
+    .window-title {
+      font-size: 12px;
+      color: var(--bio-cyan);
+      font-weight: 400;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      flex: 1;
+    }
+
+    .window-badge {
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+    }
+
+    .window-content {
+      padding: 16px;
+      overflow-y: auto;
+      flex: 1;
+      background: var(--abyss-deep);
+      color: var(--text-primary);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .unexpected-window {
+      display: flex;
+      flex-direction: column;
+      min-width: 320px;
+    }
+
+    .unexpected-window .window-content {
+      background: linear-gradient(180deg, var(--abyss-deep) 0%, var(--abyss-black) 100%);
+    }
+
+    .unexpected-window .window-badge {
+      color: var(--bio-cyan);
+    }
+
+    /* Journal Window */
+    .journal-window {
+      width: 400px;
+      right: 40px;
+      top: 100px;
+      display: flex;
+      flex-direction: column;
+      height: 400px;
+    }
+
+    .journal-entries {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .journal-entry {
+      padding: 14px;
+      background: rgba(77, 208, 225, 0.05);
+      border-left: 2px solid var(--bio-cyan);
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      transition: all 0.3s ease;
+    }
+
+    .journal-entry.new {
+      animation: entryAppear 0.5s ease forwards;
+      border-left-color: var(--accent-green);
+    }
+
+    @keyframes entryAppear {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .journal-entry .time {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      display: block;
+      letter-spacing: 0.1em;
+    }
+
+    .journal-entry:nth-child(odd) {
+      border-left-color: var(--bio-blue);
+    }
+
+    .journal-entry:nth-child(3n) {
+      border-left-color: rgba(100, 255, 200, 0.5);
+    }
+
+    /* Toast notifications */
+    .toast-container {
+      position: absolute;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 1000;
+    }
+
+    .toast {
+      background: rgba(5, 20, 35, 0.95);
+      border: 1px solid rgba(77, 208, 225, 0.3);
+      padding: 14px 24px;
+      border-radius: 8px;
+      box-shadow: 0 0 30px rgba(77, 208, 225, 0.2);
+      font-size: 12px;
+      color: var(--text-secondary);
+      animation: toastIn 0.4s ease forwards;
+      max-width: 360px;
+      letter-spacing: 0.05em;
+    }
+
+    .toast.exiting {
+      animation: toastOut 0.4s ease forwards;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toastOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-20px); }
+    }
+
+    /* Depth indicator (replaces clock) */
+    .clock {
+      position: absolute;
+      bottom: 100px;
+      left: 30px;
+      z-index: 5;
+    }
+
+    .clock-time {
+      font-size: 28px;
+      font-weight: 300;
+      color: var(--bio-cyan);
+      text-shadow: 0 0 20px var(--bio-glow);
+      letter-spacing: 0.1em;
+    }
+
+    .clock-date {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    /* Taskbar - instrument panel */
+    .taskbar {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(180deg, rgba(10, 25, 40, 0.95) 0%, rgba(5, 15, 25, 0.98) 100%);
+      border: 1px solid rgba(77, 208, 225, 0.2);
+      border-bottom: none;
+      border-radius: 12px 12px 0 0;
+      padding: 12px 30px;
+      display: flex;
+      gap: 20px;
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+    }
+
+    .taskbar-item {
+      width: 50px;
+      height: 50px;
+      background: rgba(77, 208, 225, 0.1);
+      border: 1px solid rgba(77, 208, 225, 0.2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .taskbar-item:hover {
+      background: rgba(77, 208, 225, 0.2);
+      box-shadow: 0 0 20px var(--bio-glow-dim);
+      transform: translateY(-4px);
+    }
+
+    .taskbar-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 6px;
+      background: var(--bio-cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--bio-glow);
+    }
+
+    .taskbar-item.breathing {
+      animation: breathe 3s ease-in-out infinite;
+    }
+
+    @keyframes breathe {
+      0%, 100% { box-shadow: 0 0 10px var(--bio-glow-dim); }
+      50% { box-shadow: 0 0 25px var(--bio-glow); }
+    }
+
+    /* Something in the distance */
+    .distant-creature {
+      position: absolute;
+      right: 12%;
+      bottom: 22%;
+      width: 100px;
+      height: 60px;
+      background: radial-gradient(
+        ellipse at center,
+        rgba(10, 20, 35, 0.8) 0%,
+        transparent 70%
+      );
+      border-radius: 50%;
+      opacity: 0.4;
+      animation: creature-drift 25s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .distant-creature::after {
+      content: '';
+      position: absolute;
+      left: 25%;
+      top: 40%;
+      width: 8px;
+      height: 8px;
+      background: radial-gradient(circle, rgba(77, 208, 225, 0.8) 0%, transparent 70%);
+      border-radius: 50%;
+      box-shadow: 0 0 15px var(--bio-glow);
+      animation: bio-blink 4s ease-in-out infinite;
+    }
+
+    @keyframes creature-drift {
+      0%, 100% { transform: translate(0, 0); opacity: 0.3; }
+      25% { transform: translate(-40px, 15px); opacity: 0.5; }
+      50% { transform: translate(-20px, -20px); opacity: 0.4; }
+      75% { transform: translate(20px, 10px); opacity: 0.35; }
+    }
+
+    @keyframes bio-blink {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    /* ============================================ */
+    /* VIDEO PREVIEW - ROV FOOTAGE STYLE */
+    /* ============================================ */
+
+    .video-window {
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+    }
+
+    .video-preview {
+      position: relative;
+      background: #000;
+      border-radius: 0 0 8px 8px;
+      overflow: hidden;
+      flex: 1;
+      min-height: 200px;
+    }
+
+    .rov-frame {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 200px;
+      overflow: hidden;
+    }
+
+    /* Deep water gradient */
+    .deep-water {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        180deg,
+        #030810 0%,
+        #051018 30%,
+        #020a12 60%,
+        #010508 100%
+      );
+    }
+
+    /* Marine snow / floating particles */
+    .marine-snow {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .snow-particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(200, 220, 255, 0.4);
+      border-radius: 50%;
+      animation: snow-drift 8s linear infinite;
+    }
+
+    .snow-particle:nth-child(odd) {
+      width: 3px;
+      height: 3px;
+      background: rgba(180, 200, 230, 0.3);
+    }
+
+    @keyframes snow-drift {
+      0% { transform: translateY(-20px) translateX(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(300px) translateX(20px); opacity: 0; }
+    }
+
+    /* The specimen - barely visible */
+    .specimen-silhouette {
+      position: absolute;
+      right: 15%;
+      top: 35%;
+      width: 80px;
+      height: 50px;
+      background: radial-gradient(
+        ellipse at center,
+        rgba(15, 25, 35, 0.9) 0%,
+        rgba(10, 15, 25, 0.6) 50%,
+        transparent 70%
+      );
+      border-radius: 60% 40% 50% 50%;
+      animation: specimen-drift 12s ease-in-out infinite;
+      opacity: 0.7;
+    }
+
+    .specimen-silhouette::before {
+      content: '';
+      position: absolute;
+      left: -30px;
+      top: 30%;
+      width: 40px;
+      height: 20px;
+      background: radial-gradient(
+        ellipse at right,
+        rgba(15, 25, 35, 0.7) 0%,
+        transparent 70%
+      );
+      border-radius: 50%;
+    }
+
+    @keyframes specimen-drift {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(-10px, 5px) rotate(2deg); }
+      50% { transform: translate(-5px, -8px) rotate(-1deg); }
+      75% { transform: translate(8px, 3px) rotate(1deg); }
+    }
+
+    /* Bioluminescent glow */
+    .bio-glow-specimen {
+      position: absolute;
+      right: 20%;
+      top: 38%;
+      width: 12px;
+      height: 12px;
+      background: radial-gradient(
+        circle,
+        rgba(100, 200, 255, 0.9) 0%,
+        rgba(80, 180, 255, 0.5) 30%,
+        rgba(60, 150, 255, 0.2) 60%,
+        transparent 70%
+      );
+      border-radius: 50%;
+      animation: bio-pulse-specimen 3s ease-in-out infinite, specimen-drift 12s ease-in-out infinite;
+      box-shadow: 
+        0 0 20px rgba(100, 200, 255, 0.6),
+        0 0 40px rgba(80, 180, 255, 0.3);
+    }
+
+    @keyframes bio-pulse-specimen {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.3); }
+    }
+
+    /* ============================================ */
+    /* CREATURES - CSS-based deep sea organisms */
+    /* ============================================ */
+
+    .creatures {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .creature {
+      position: absolute;
+      transform: translate(-50%, -50%);
+    }
+
+    /* Jellyfish */
+    .jellyfish {
+      animation: jellyfish-float 8s ease-in-out infinite;
+    }
+
+    .jellyfish.centered {
+      animation: jellyfish-float-gentle 6s ease-in-out infinite;
+    }
+
+    .jelly-bell {
+      width: 50px;
+      height: 35px;
+      background: radial-gradient(
+        ellipse at 50% 30%,
+        rgba(180, 220, 255, 0.4) 0%,
+        rgba(150, 200, 255, 0.2) 40%,
+        rgba(120, 180, 255, 0.1) 70%,
+        transparent 100%
+      );
+      border-radius: 50% 50% 40% 40%;
+      box-shadow: 
+        0 0 20px rgba(150, 200, 255, 0.3),
+        inset 0 -10px 20px rgba(100, 180, 255, 0.2);
+      animation: jelly-pulse 3s ease-in-out infinite;
+    }
+
+    .jelly-tentacles {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+      margin-top: -5px;
+    }
+
+    .tentacle {
+      width: 2px;
+      height: 40px;
+      background: linear-gradient(
+        to bottom,
+        rgba(150, 200, 255, 0.3) 0%,
+        rgba(150, 200, 255, 0.1) 50%,
+        transparent 100%
+      );
+      border-radius: 0 0 50% 50%;
+      animation: tentacle-wave 2s ease-in-out infinite;
+      transform-origin: top center;
+    }
+
+    .tentacle:nth-child(1) { animation-delay: 0s; height: 35px; }
+    .tentacle:nth-child(2) { animation-delay: 0.3s; height: 45px; }
+    .tentacle:nth-child(3) { animation-delay: 0.6s; height: 38px; }
+    .tentacle:nth-child(4) { animation-delay: 0.9s; height: 42px; }
+
+    @keyframes jellyfish-float {
+      0%, 100% { transform: translate(-50%, -50%) translateY(0) translateX(0); }
+      25% { transform: translate(-50%, -50%) translateY(-15px) translateX(10px); }
+      50% { transform: translate(-50%, -50%) translateY(-5px) translateX(-5px); }
+      75% { transform: translate(-50%, -50%) translateY(-20px) translateX(5px); }
+    }
+
+    @keyframes jellyfish-float-gentle {
+      0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+      50% { transform: translate(-50%, -50%) translateY(-10px); }
+    }
+
+    @keyframes jelly-pulse {
+      0%, 100% { transform: scaleX(1) scaleY(1); }
+      50% { transform: scaleX(1.1) scaleY(0.9); }
+    }
+
+    @keyframes tentacle-wave {
+      0%, 100% { transform: skewX(0deg); }
+      50% { transform: skewX(5deg); }
+    }
+
+    /* Small bioluminescent fish */
+    .small-fish {
+      width: 20px;
+      height: 8px;
+      background: radial-gradient(
+        ellipse at 30% 50%,
+        rgba(100, 200, 255, 0.6) 0%,
+        rgba(80, 180, 255, 0.3) 50%,
+        transparent 70%
+      );
+      border-radius: 60% 40% 40% 60%;
+      animation: fish-swim 5s ease-in-out infinite;
+      box-shadow: 
+        0 0 10px rgba(100, 200, 255, 0.5),
+        0 0 20px rgba(80, 180, 255, 0.3);
+    }
+
+    .small-fish::before {
+      content: '';
+      position: absolute;
+      right: -6px;
+      top: 50%;
+      width: 8px;
+      height: 6px;
+      background: rgba(100, 200, 255, 0.3);
+      clip-path: polygon(0 50%, 100% 0, 100% 100%);
+      transform: translateY(-50%);
+    }
+
+    @keyframes fish-swim {
+      0%, 100% { transform: translate(-50%, -50%) translateX(0) translateY(0); }
+      25% { transform: translate(-50%, -50%) translateX(20px) translateY(-5px); }
+      50% { transform: translate(-50%, -50%) translateX(40px) translateY(5px); }
+      75% { transform: translate(-50%, -50%) translateX(60px) translateY(-3px); }
+    }
+
+    /* The mysterious specimen */
+    .specimen {
+      animation: specimen-hover 10s ease-in-out infinite;
+    }
+
+    .specimen-body {
+      width: 70px;
+      height: 45px;
+      background: radial-gradient(
+        ellipse at 40% 40%,
+        rgba(20, 30, 40, 0.95) 0%,
+        rgba(15, 25, 35, 0.8) 50%,
+        rgba(10, 20, 30, 0.5) 80%,
+        transparent 100%
+      );
+      border-radius: 60% 50% 45% 55%;
+      position: relative;
+    }
+
+    .specimen-glow {
+      position: absolute;
+      left: 30%;
+      top: 40%;
+      width: 15px;
+      height: 15px;
+      background: radial-gradient(
+        circle,
+        rgba(255, 100, 80, 0.8) 0%,
+        rgba(255, 80, 60, 0.4) 40%,
+        transparent 70%
+      );
+      border-radius: 50%;
+      animation: specimen-glow-pulse 4s ease-in-out infinite;
+      box-shadow: 
+        0 0 15px rgba(255, 100, 80, 0.6),
+        0 0 30px rgba(255, 80, 60, 0.3);
+    }
+
+    .specimen-eye {
+      position: absolute;
+      left: 60%;
+      top: 35%;
+      width: 8px;
+      height: 8px;
+      background: radial-gradient(
+        circle,
+        rgba(200, 50, 50, 0.9) 0%,
+        rgba(150, 30, 30, 0.6) 50%,
+        transparent 70%
+      );
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(200, 50, 50, 0.5);
+    }
+
+    @keyframes specimen-hover {
+      0%, 100% { transform: translate(-50%, -50%) translateY(0) rotate(0deg); }
+      25% { transform: translate(-50%, -50%) translateY(-8px) rotate(2deg); }
+      50% { transform: translate(-50%, -50%) translateY(5px) rotate(-1deg); }
+      75% { transform: translate(-50%, -50%) translateY(-3px) rotate(1deg); }
+    }
+
+    @keyframes specimen-glow-pulse {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      30% { opacity: 1; transform: scale(1.2); }
+      60% { opacity: 0.4; transform: scale(0.9); }
+    }
+
+    /* Image preview */
+    .image-preview {
+      background: var(--abyss-black);
+      position: relative;
+      height: 280px;
+      overflow: hidden;
+      border-radius: 0 0 12px 12px;
+    }
+
+    .photo-metadata {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 12px;
+      background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+      color: var(--text-secondary);
+      font-size: 10px;
+    }
+
+    .photo-label {
+      color: var(--text-primary);
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    /* Spreadsheet preview */
+    .spreadsheet-preview {
+      background: var(--abyss-deep);
+      padding: 12px;
+      border-radius: 4px;
+    }
+
+    .spreadsheet-preview table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    .spreadsheet-preview th {
+      text-align: left;
+      color: var(--bio-cyan);
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(77, 208, 225, 0.2);
+      font-weight: 500;
+    }
+
+    .spreadsheet-preview td {
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(77, 208, 225, 0.1);
+    }
+
+    .spreadsheet-preview td.highlight {
+      color: var(--accent-red);
+      font-weight: 500;
+    }
+
+    .spreadsheet-note {
+      margin-top: 10px;
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ROV HUD overlay */
+    .rov-hud {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      font-family: 'JetBrains Mono', monospace;
+      color: rgba(100, 200, 150, 0.7);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .hud-top {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .hud-bottom {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .hud-label, .hud-data {
+      text-shadow: 0 0 10px rgba(100, 200, 150, 0.5);
+    }
+
+    /* Scan lines */
+    .scan-lines {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 2px,
+        rgba(0, 0, 0, 0.1) 2px,
+        rgba(0, 0, 0, 0.1) 4px
+      );
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    /* Frozen indicator */
+    .frozen-indicator {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.6);
+      color: rgba(255, 100, 100, 0.8);
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      border: 1px solid rgba(255, 100, 100, 0.3);
+      animation: pause-blink 2s ease-in-out infinite;
+    }
+
+    @keyframes pause-blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Enhancement badge */
+    .enhancement-badge {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(255, 200, 100, 0.15);
+      color: rgba(255, 220, 150, 0.9);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border: 1px solid rgba(255, 200, 100, 0.3);
+    }
+
+    /* ============================================ */
+    /* MBARI IT DEPARTMENT NOTIFICATIONS */
+    /* ============================================ */
+
+    .it-notification {
+      background: linear-gradient(180deg, #1a2332 0%, #141c28 100%) !important;
+      border: 1px solid rgba(100, 150, 200, 0.3) !important;
+      border-left: 3px solid #3b82f6 !important;
+      border-radius: 4px !important;
+      padding: 0 !important;
+      max-width: 400px !important;
+      box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(100, 150, 200, 0.1) !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    }
+
+    .it-notification.it-warning {
+      border-left-color: #f59e0b !important;
+    }
+
+    .it-notification.it-error {
+      border-left-color: #ef4444 !important;
+    }
+
+    .it-notification.it-success {
+      border-left-color: #10b981 !important;
+    }
+
+    .it-notification.it-info {
+      border-left-color: #3b82f6 !important;
+    }
+
+    .it-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid rgba(100, 150, 200, 0.1);
+    }
+
+    .it-icon {
+      font-size: 14px;
+    }
+
+    .it-brand {
+      font-size: 9px;
+      font-weight: 600;
+      color: #3b82f6;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      padding: 2px 6px;
+      background: rgba(59, 130, 246, 0.15);
+      border-radius: 3px;
+    }
+
+    .it-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(220, 230, 245, 0.95);
+      flex: 1;
+    }
+
+    .it-message {
+      padding: 12px 14px;
+      font-size: 12px;
+      color: rgba(180, 195, 220, 0.85);
+      line-height: 1.5;
+      letter-spacing: 0.01em;
+    }
+
+    .it-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 14px;
+      background: rgba(0, 0, 0, 0.15);
+      border-top: 1px solid rgba(100, 150, 200, 0.1);
+    }
+
+    .it-policy {
+      font-size: 9px;
+      color: rgba(120, 140, 170, 0.6);
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.1em;
+    }
+
+    .it-dismiss {
+      font-size: 10px;
+      color: rgba(59, 130, 246, 0.8);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 3px;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 500;
+    }
+
+    .it-dismiss:hover {
+      background: rgba(59, 130, 246, 0.2);
+      color: rgba(100, 160, 255, 1);
+    }
+
+    /* Warning state pulsing border */
+    .it-notification.it-warning {
+      animation: it-warning-pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes it-warning-pulse {
+      0%, 100% { border-left-color: #f59e0b; }
+      50% { border-left-color: #fbbf24; }
+    }
+
+    /* Error state */
+    .it-notification.it-error .it-brand {
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.15);
+    }
+
+    .it-notification.it-error .it-dismiss {
+      color: rgba(239, 68, 68, 0.8);
+    }
+
+    .it-notification.it-error .it-dismiss:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+
+    /* Success state */
+    .it-notification.it-success .it-brand {
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.15);
+    }
+  </style>
+</head>
+<body>
+  <div class="desktop" id="desktop">
+    <!-- Marine snow particles -->
+    <div class="particle" style="left: 5%; animation-delay: 0s;"></div>
+    <div class="particle" style="left: 15%; animation-delay: 2s;"></div>
+    <div class="particle" style="left: 25%; animation-delay: 4s;"></div>
+    <div class="particle" style="left: 35%; animation-delay: 1s;"></div>
+    <div class="particle" style="left: 45%; animation-delay: 6s;"></div>
+    <div class="particle" style="left: 55%; animation-delay: 3s;"></div>
+    <div class="particle" style="left: 65%; animation-delay: 8s;"></div>
+    <div class="particle" style="left: 75%; animation-delay: 5s;"></div>
+    <div class="particle" style="left: 85%; animation-delay: 7s;"></div>
+    <div class="particle" style="left: 95%; animation-delay: 9s;"></div>
+
+    <!-- Distant creature -->
+    <div class="distant-creature"></div>
+
+    <!-- Greeting -->
+    <div class="greeting" id="greeting">
+      <div id="greeting-text">Loading...</div>
+      <div class="greeting-sub" id="greeting-sub"></div>
+    </div>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Files container -->
+    <div id="files-container"></div>
+
+    <!-- Windows container -->
+    <div id="windows-container">
+      <!-- Journal Window -->
+      <div class="window journal-window" id="journal-window">
+        <div class="window-header">
+          <div class="window-controls">
+            <div class="window-control control-close"></div>
+            <div class="window-control control-minimize"></div>
+            <div class="window-control control-maximize"></div>
+          </div>
+          <div class="window-title">System Log</div>
+          <div class="window-badge">curated for you</div>
+        </div>
+        <div class="window-content">
+          <div class="journal-entries" id="journal-entries">
+            <!-- Entries will be added here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clock / Time display -->
+    <div class="clock">
+      <div class="clock-time" id="clock-time">02:34</div>
+      <div class="clock-date" id="clock-date">Monday</div>
+    </div>
+
+    <!-- Taskbar -->
+    <div class="taskbar" id="taskbar">
+      <div class="taskbar-item active" data-app="home">🏠</div>
+      <div class="taskbar-item" data-app="files">📁</div>
+      <div class="taskbar-item" data-app="search">🔍</div>
+      <div class="taskbar-item breathing" data-app="rov">🎥</div>
+      <div class="taskbar-item" data-app="settings">⚙️</div>
+    </div>
+  </div>
+
+  <script src="os.js"></script>
+</body>
+</html>

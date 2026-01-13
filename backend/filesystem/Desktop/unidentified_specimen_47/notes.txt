@@ -1,0 +1,33 @@
+SPECIMEN 47 - OBSERVATION NOTES
+================================
+
+First observed: Dive 4847, 02:34:17
+Depth: 2,847m
+Location: Monterey Canyon, coordinates redacted
+
+Physical description:
+- Estimated size: 40-60cm
+- Coloration: Dark, near-black with irregular bioluminescent patches
+- Body plan: Unclear - does not match cephalopod, fish, or cnidarian morphology
+- Movement: Undulating, but wrong. The way it bends...
+
+Behavioral notes:
+- Did not flee ROV lights (unusual for this depth)
+- Appeared to track camera movement
+- Bioluminescence pulsed in irregular pattern - not matching known communication signals
+
+Database queries:
+- MBARI specimen database: NO MATCH
+- WoRMS taxonomy: NO MATCH  
+- GenBank (eDNA): NO MATCH (3 samples submitted)
+
+Identification requests:
+1. Submitted 2025-12-23 - Status: INCONCLUSIVE
+2. Submitted 2025-12-30 - Status: INCONCLUSIVE  
+3. Submitted 2026-01-05 - Status: PENDING
+
+Personal note:
+I've watched the footage 47 times. The movement is wrong. It shouldn't 
+bend that way. I keep coming back to timestamp 02:34:17.
+
+- M. Petrovic
