@@ -2899,9 +2899,9 @@ function startWallCanvas(canvasId, windowId) {
 // SEEKERS - Bioluminescent swarm reacting to light
 // ============================================
 
-function openSeekersScene() {
+async function openSeekersScene() {
   const windowId = generateId('window');
-  
+
   const windowEl = document.createElement('div');
   windowEl.className = 'window video-window opening';
   windowEl.id = windowId;
@@ -2909,7 +2909,7 @@ function openSeekersScene() {
   windowEl.style.top = `${randomInt(50, 150)}px`;
   windowEl.style.width = '600px';
   windowEl.style.height = '450px';
-  
+
   windowEl.innerHTML = `
     <div class="window-header">
       <div class="window-controls">
@@ -2928,180 +2928,41 @@ function openSeekersScene() {
       <div style="position: absolute; bottom: 12px; right: 12px; font-size: 9px; color: rgba(77, 208, 225, 0.5);">02:14:07</div>
     </div>
   `;
-  
+
   document.getElementById('windows-container').appendChild(windowEl);
   state.openWindows.push(windowId);
-  
+
   const header = windowEl.querySelector('.window-header');
   makeDraggable(windowEl, header);
   header.style.cursor = 'grab';
   makeResizable(windowEl);
-  
-  setTimeout(() => {
-    startSeekersCanvas(`seekers-canvas-${windowId}`, windowId);
+
+  // Initialize visual-toolkit Seekers scene
+  setTimeout(async () => {
+    const canvas = document.getElementById(`seekers-canvas-${windowId}`);
+    if (!canvas) return;
+
+    // Access scene from VisualToolkit global bundle
+    const SeekersScene = window.VisualToolkit?.scenes?.deepSea?.seekers;
+    if (!SeekersScene) {
+      console.error('[Scene] Seekers scene not available from VisualToolkit');
+      return;
+    }
+
+    // Initialize scene
+    await SeekersScene.init(canvas, { intensity: 0.7, duration: Infinity });
+
+    // Store scene for cleanup
+    activeScenes.set(windowId, SeekersScene);
   }, 100);
-  
+
   if (ambience) {
     ambience.addLayer('bioluminescence', { intensity: 0.15, fadeIn: 3 });
   }
-  
-  addJournalEntry("Dive 4913: Encountered dense swarm of bioluminescent organisms. Species unidentified. They seem... curious about the ROV light.");
-  
-  return windowId;
-}
 
-function startSeekersCanvas(canvasId, windowId) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  
-  const ctx = canvas.getContext('2d');
-  let time = 0;
-  
-  // Mouse is the ROV light
-  const light = { x: -1000, y: -1000, prevX: -1000, prevY: -1000 };
-  
-  canvas.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    light.prevX = light.x;
-    light.prevY = light.y;
-    light.x = (e.clientX - rect.left) * (canvas.width / rect.width);
-    light.y = (e.clientY - rect.top) * (canvas.height / rect.height);
-  });
-  
-  canvas.addEventListener('mouseleave', () => {
-    light.x = -1000;
-    light.y = -1000;
-  });
-  
-  // Use visual-toolkit for seekers
-  const VT = window.VisualToolkit;
-  let seekers = [];
-  
-  // Marine snow particles
-  const particles = [];
-  for (let i = 0; i < 30; i++) {
-    particles.push({
-      x: Math.random(),
-      y: Math.random(),
-      size: 0.5 + Math.random() * 1.5,
-      speed: 0.0005 + Math.random() * 0.001,
-      alpha: 0.1 + Math.random() * 0.2,
-    });
-  }
-  
-  function resize() {
-    const rect = canvas.getBoundingClientRect();
-    const oldW = canvas.width / window.devicePixelRatio || rect.width;
-    const oldH = canvas.height / window.devicePixelRatio || rect.height;
-    
-    canvas.width = rect.width * window.devicePixelRatio;
-    canvas.height = rect.height * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    
-    const w = rect.width;
-    const h = rect.height;
-    
-    // Initialize seekers using toolkit (center-biased spawn)
-    if (seekers.length === 0) {
-      seekers = VT.createSeekerSwarm(50, w, h, { spawnBias: 'center' });
-    }
-  }
-  resize();
-  
-  const resizeObserver = new ResizeObserver(resize);
-  resizeObserver.observe(canvas);
-  
-  function isWindowOpen() {
-    return document.getElementById(windowId) !== null;
-  }
-  
-  // Using toolkit's updateSeekerWithDrift and drawSeekerSwarm
-  
-  function render() {
-    if (!isWindowOpen()) {
-      resizeObserver.disconnect();
-      return;
-    }
-    
-    const w = canvas.width / window.devicePixelRatio;
-    const h = canvas.height / window.devicePixelRatio;
-    
-    // Deep water background
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-    bgGrad.addColorStop(0, '#020810');
-    bgGrad.addColorStop(0.5, '#010508');
-    bgGrad.addColorStop(1, '#000305');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, w, h);
-    
-    // Calculate light speed
-    const lightSpeed = Math.sqrt(
-      (light.x - light.prevX) ** 2 + (light.y - light.prevY) ** 2
-    );
-    
-    // Update seekers using toolkit (with center drift to prevent edge clustering)
-    VT.updateSeekerSwarm(seekers, light.x, light.y, lightSpeed, w, h, 0.02);
-    
-    // Draw seekers using toolkit (handles sorting and glow rendering)
-    VT.drawSeekerSwarm(ctx, seekers, {
-      lightX: light.x,
-      lightY: light.y,
-      lightRadius: 120,
-      time: time,
-    });
-    
-    // Marine snow
-    for (const p of particles) {
-      p.y += p.speed;
-      p.x += Math.sin(time * 0.001 + p.y * 5) * 0.0003;
-      if (p.y > 1.05) {
-        p.y = -0.05;
-        p.x = Math.random();
-      }
-      ctx.fillStyle = `rgba(150, 180, 200, ${p.alpha})`;
-      ctx.beginPath();
-      ctx.arc(p.x * w, p.y * h, p.size, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    
-    // Player light (ROV spotlight) - dimmer than other scenes to let seekers shine
-    if (light.x > 0 && light.x < w) {
-      for (let i = 3; i >= 1; i--) {
-        const layerRadius = 100 * (i / 2);
-        const alpha = 0.08 / i;
-        const grad = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, layerRadius);
-        grad.addColorStop(0, `rgba(180, 220, 255, ${alpha})`);
-        grad.addColorStop(0.5, `rgba(100, 180, 220, ${alpha * 0.5})`);
-        grad.addColorStop(1, 'transparent');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(light.x, light.y, layerRadius, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      
-      // Small bright core
-      const core = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, 10);
-      core.addColorStop(0, 'rgba(255, 255, 255, 0.7)');
-      core.addColorStop(0.5, 'rgba(200, 240, 255, 0.3)');
-      core.addColorStop(1, 'transparent');
-      ctx.fillStyle = core;
-      ctx.beginPath();
-      ctx.arc(light.x, light.y, 10, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    
-    // Soft vignette
-    const vignette = ctx.createRadialGradient(w/2, h/2, h * 0.3, w/2, h/2, h * 0.85);
-    vignette.addColorStop(0, 'transparent');
-    vignette.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
-    ctx.fillStyle = vignette;
-    ctx.fillRect(0, 0, w, h);
-    
-    time += 16;
-    requestAnimationFrame(render);
-  }
-  
-  render();
+  addJournalEntry("Dive 4913: Encountered dense swarm of bioluminescent organisms. Species unidentified. They seem... curious about the ROV light.");
+
+  return windowId;
 }
 
 // ============================================
