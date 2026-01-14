@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audio Engine Test - music-playground Integration</title>
+  <style>
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: linear-gradient(135deg, #010508 0%, #051420 100%);
+      color: #4dd0e1;
+      padding: 40px;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: rgba(5, 20, 32, 0.8);
+      border: 1px solid #4dd0e1;
+      padding: 30px;
+      border-radius: 8px;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+      font-size: 24px;
+    }
+
+    .subtitle {
+      color: #029299;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .status {
+      margin: 20px 0;
+      padding: 15px;
+      border-left: 3px solid #4dd0e1;
+      background: rgba(77, 208, 225, 0.1);
+      border-radius: 4px;
+    }
+
+    .status.loading {
+      border-left-color: #ffb300;
+      background: rgba(255, 179, 0, 0.1);
+      color: #ffb300;
+    }
+
+    .status.error {
+      border-left-color: #ff6b6b;
+      background: rgba(255, 107, 107, 0.1);
+      color: #ff6b6b;
+    }
+
+    .status.success {
+      border-left-color: #51cf66;
+      background: rgba(81, 207, 102, 0.1);
+      color: #51cf66;
+    }
+
+    button {
+      background: #4dd0e1;
+      color: #010508;
+      border: none;
+      padding: 12px 24px;
+      margin: 10px 5px 10px 0;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background: #29b6f6;
+      transform: translateY(-2px);
+    }
+
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .controls {
+      margin: 30px 0;
+    }
+
+    .info {
+      font-size: 12px;
+      color: #029299;
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(2, 146, 153, 0.1);
+      border-radius: 4px;
+    }
+
+    .code {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎵 Audio Engine Test</h1>
+    <p class="subtitle">Testing music-playground integration with narrative-os</p>
+
+    <div id="status-library" class="status loading">
+      ⏳ Loading music-playground library...
+    </div>
+
+    <div id="status-audio" class="status loading">
+      ⏳ Checking Web Audio API...
+    </div>
+
+    <div id="status-ambience" class="status loading">
+      ⏳ Initializing ambience...
+    </div>
+
+    <div class="controls">
+      <h3>Audio Controls</h3>
+      <button id="play-deepSea" disabled>Play Deep Sea</button>
+      <button id="play-rov" disabled>Add ROV Layer</button>
+      <button id="play-hydrophone" disabled>Add Hydrophone</button>
+      <button id="stop-audio" disabled>Stop All</button>
+    </div>
+
+    <div id="debug-info" class="info">
+      <strong>Debug Info:</strong>
+      <div class="code" id="debug-output">Initializing...</div>
+    </div>
+  </div>
+
+  <!-- Load music-playground UMD build -->
+  <script src="music-playground.umd.js"></script>
+
+  <script>
+    let ambience = null;
+    let audioInitialized = false;
+    const debugOutput = document.getElementById('debug-output');
+
+    function log(message) {
+      console.log('[TEST]', message);
+      debugOutput.innerHTML += message + '\n';
+      debugOutput.scrollTop = debugOutput.scrollHeight;
+    }
+
+    function setStatus(elementId, status, message) {
+      const el = document.getElementById(elementId);
+      el.className = 'status ' + status;
+      el.innerHTML = (status === 'success' ? '✓ ' : status === 'error' ? '✗ ' : '⏳ ') + message;
+    }
+
+    async function initAudio() {
+      try {
+        // Check library
+        if (!window.MusicPlayground) {
+          throw new Error('window.MusicPlayground not found');
+        }
+        setStatus('status-library', 'success', 'music-playground loaded');
+        log('✓ music-playground library loaded');
+        log('  - window.MusicPlayground: ' + typeof window.MusicPlayground);
+        log('  - Ambience class: ' + typeof window.MusicPlayground.Ambience);
+
+        // Check Web Audio
+        if (!window.AudioContext && !window.webkitAudioContext) {
+          throw new Error('Web Audio API not supported');
+        }
+        setStatus('status-audio', 'success', 'Web Audio API available');
+        log('✓ Web Audio API available');
+
+        // Initialize ambience
+        ambience = new window.MusicPlayground.Ambience();
+        setStatus('status-ambience', 'success', 'Ambience object created');
+        log('✓ Ambience object created');
+        log('  - ambience.play: ' + typeof ambience.play);
+        log('  - ambience.stop: ' + typeof ambience.stop);
+        log('  - ambience.addLayer: ' + typeof ambience.addLayer);
+
+        audioInitialized = true;
+
+        // Enable buttons
+        document.getElementById('play-deepSea').disabled = false;
+        document.getElementById('play-rov').disabled = false;
+        document.getElementById('play-hydrophone').disabled = false;
+        document.getElementById('stop-audio').disabled = false;
+
+        log('\n✓ Audio system ready!');
+
+      } catch (error) {
+        setStatus('status-audio', 'error', 'Error: ' + error.message);
+        log('✗ Error: ' + error.message);
+        log('  Stack: ' + error.stack);
+      }
+    }
+
+    // Button handlers
+    document.getElementById('play-deepSea').addEventListener('click', async () => {
+      try {
+        log('\n▶ Playing deepSea ambience...');
+        await ambience.play('deepSea', {
+          intensity: 0.3,
+          depth: 2000,
+          fadeIn: 3
+        });
+        log('✓ deepSea playing');
+        document.getElementById('play-rov').disabled = false;
+        document.getElementById('play-hydrophone').disabled = false;
+      } catch (error) {
+        log('✗ Error playing deepSea: ' + error.message);
+      }
+    });
+
+    document.getElementById('play-rov').addEventListener('click', async () => {
+      try {
+        log('\n▶ Adding ROV layer...');
+        await ambience.addLayer('rov', { intensity: 0.1 });
+        log('✓ ROV layer added');
+      } catch (error) {
+        log('✗ Error adding ROV: ' + error.message);
+      }
+    });
+
+    document.getElementById('play-hydrophone').addEventListener('click', async () => {
+      try {
+        log('\n▶ Adding hydrophone layer...');
+        await ambience.addLayer('hydrophone', { intensity: 0.08 });
+        log('✓ Hydrophone layer added');
+      } catch (error) {
+        log('✗ Error adding hydrophone: ' + error.message);
+      }
+    });
+
+    document.getElementById('stop-audio').addEventListener('click', () => {
+      try {
+        log('\n⏹ Stopping all audio...');
+        ambience.stop(1);
+        log('✓ Audio stopped');
+      } catch (error) {
+        log('✗ Error stopping: ' + error.message);
+      }
+    });
+
+    // Initialize on page load
+    window.addEventListener('load', initAudio);
+  </script>
+</body>
+</html>

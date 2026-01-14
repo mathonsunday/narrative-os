@@ -1,0 +1,32 @@
+{
+  "name": "narrative-os",
+  "version": "1.0.0",
+  "description": "An experimental operating system interface designed for deep-sea marine biologist Dr. Mira Petrovic. This project explores innovative user experiences for operating systems through a narrative-driven, character-specific interface.",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:debug": "playwright test --debug"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@vitest/ui": "^4.0.17",
+    "happy-dom": "^20.1.0",
+    "jsdom": "^27.4.0",
+    "mock-socket": "^9.3.1",
+    "pixelmatch": "^7.1.0",
+    "playwright": "^1.57.0",
+    "vitest": "^4.0.17"
+  },
+  "dependencies": {
+    "music-playground": "^2.3.0",
+    "visual-toolkit": "^2.1.5"
+  }
+}

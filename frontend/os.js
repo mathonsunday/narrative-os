@@ -3,6 +3,13 @@
 // Character: Dr. Mira Petrovic - Deep-sea marine biologist
 
 // ============================================
+// SCENE MANAGEMENT
+// ============================================
+
+// Store active scene instances for cleanup
+const activeScenes = new Map();
+
+// ============================================
 // AUDIO ENGINE
 // ============================================
 
@@ -3101,9 +3108,9 @@ function startSeekersCanvas(canvasId, windowId) {
 // TENDRIL - Single organic tendril reaching toward light
 // ============================================
 
-function openShadowsScene() {
+async function openShadowsScene() {
   const windowId = generateId('window');
-  
+
   const windowEl = document.createElement('div');
   windowEl.className = 'window video-window opening';
   windowEl.id = windowId;
@@ -3111,7 +3118,7 @@ function openShadowsScene() {
   windowEl.style.top = `${randomInt(50, 150)}px`;
   windowEl.style.width = '600px';
   windowEl.style.height = '450px';
-  
+
   windowEl.innerHTML = `
     <div class="window-header">
       <div class="window-controls">
@@ -3130,299 +3137,41 @@ function openShadowsScene() {
       <div style="position: absolute; bottom: 12px; right: 12px; font-size: 9px; color: rgba(77, 208, 225, 0.5);">03:22:18</div>
     </div>
   `;
-  
+
   document.getElementById('windows-container').appendChild(windowEl);
   state.openWindows.push(windowId);
-  
+
   const header = windowEl.querySelector('.window-header');
   makeDraggable(windowEl, header);
   header.style.cursor = 'grab';
   makeResizable(windowEl);
-  
-  setTimeout(() => {
-    startShadowsCanvas(`shadows-canvas-${windowId}`, windowId);
+
+  // Initialize visual-toolkit Shadows scene
+  setTimeout(async () => {
+    const canvas = document.getElementById(`shadows-canvas-${windowId}`);
+    if (!canvas) return;
+
+    // Access scene from VisualToolkit global bundle
+    const ShadowsScene = window.VisualToolkit?.scenes?.deepSea?.shadows;
+    if (!ShadowsScene) {
+      console.error('[Scene] Shadows scene not available from VisualToolkit');
+      return;
+    }
+
+    // Initialize scene
+    await ShadowsScene.init(canvas, { intensity: 0.5, duration: Infinity });
+
+    // Store scene for cleanup
+    activeScenes.set(windowId, ShadowsScene);
   }, 100);
-  
+
   if (ambience) {
     ambience.addLayer('tension', { intensity: 0.3, fadeIn: 2 });
   }
-  
-  addJournalEntry("Dive 4914: Shadows moving across the seafloor. Multiple appendages detected. Origin unknown.");
-  
-  return windowId;
-}
 
-function startShadowsCanvas(canvasId, windowId) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  
-  const ctx = canvas.getContext('2d');
-  let time = 0;
-  
-  // Mouse light source (for visibility)
-  const light = { x: -1000, y: -1000 };
-  
-  canvas.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    light.x = (e.clientX - rect.left) * (canvas.width / rect.width);
-    light.y = (e.clientY - rect.top) * (canvas.height / rect.height);
-  });
-  
-  canvas.addEventListener('mouseleave', () => {
-    light.x = -1000;
-    light.y = -1000;
-  });
-  
-  // Shadows - large, frantic, independent movement
-  let shadows = [];
-  let lastW = 0, lastH = 0;
-  
-  // Marine snow - fewer particles for performance
-  const particles = [];
-  for (let i = 0; i < 10; i++) {
-    particles.push({
-      x: Math.random(),
-      y: Math.random(),
-      size: 0.5 + Math.random() * 1.5,
-      speed: 0.0005 + Math.random() * 0.001,
-      alpha: 0.1 + Math.random() * 0.2,
-    });
-  }
-  
-  function resize() {
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * window.devicePixelRatio;
-    canvas.height = rect.height * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    
-    const w = rect.width;
-    const h = rect.height;
-    
-    // Recreate shadows on resize
-    if (shadows.length === 0 || Math.abs(w - lastW) > 20 || Math.abs(h - lastH) > 20) {
-      shadows = [];
-      
-      // Create 4-7 aquatic shadow creatures (jellyfish-like) - fewer for performance
-      const count = 4 + Math.floor(Math.random() * 4);
-      for (let i = 0; i < count; i++) {
-        shadows.push({
-          x: Math.random() * w,
-          y: Math.random() * h,
-          vx: (Math.random() - 0.5) * 2,  // SLOWER movement
-          vy: (Math.random() - 0.5) * 1.5 - 0.5,  // Slight upward drift
-          size: 60 + Math.random() * 80,  // Creature size
-          bellSize: 40 + Math.random() * 50,  // Jellyfish bell
-          tentacleCount: 5 + Math.floor(Math.random() * 4),  // 5-9 tentacles (fewer)
-          angle: Math.random() * Math.PI * 2,
-          angleSpeed: (Math.random() - 0.5) * 0.03,  // Slow rotation
-          pulsePhase: Math.random() * Math.PI * 2,  // Pulsing animation
-          pulseSpeed: 0.5 + Math.random() * 0.5,
-          timeOffset: Math.random() * 1000,
-        });
-      }
-      
-      lastW = w;
-      lastH = h;
-    }
-  }
-  resize();
-  
-  const resizeObserver = new ResizeObserver(resize);
-  resizeObserver.observe(canvas);
-  
-  function isWindowOpen() {
-    return document.getElementById(windowId) !== null;
-  }
-  
-  function render() {
-    if (!isWindowOpen()) {
-      resizeObserver.disconnect();
-      return;
-    }
-    
-    const w = canvas.width / window.devicePixelRatio;
-    const h = canvas.height / window.devicePixelRatio;
-    
-    // Deep water background - very slight lightening for contrast
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-    bgGrad.addColorStop(0, '#020911');  // Very slight lightening
-    bgGrad.addColorStop(0.5, '#010508');
-    bgGrad.addColorStop(1, '#000305');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, w, h);
-    
-    // Update shadows - SLOW, graceful aquatic movement
-    for (const shadow of shadows) {
-      // Slow, drifting movement
-      shadow.x += shadow.vx;
-      shadow.y += shadow.vy;
-      shadow.angle += shadow.angleSpeed;
-      
-      // Gentle pulsing (jellyfish-like)
-      shadow.pulsePhase += shadow.pulseSpeed * 0.01;
-      
-      // Occasional gentle direction changes (not frantic)
-      if (Math.random() < 0.01) {
-        shadow.vx += (Math.random() - 0.5) * 0.5;
-        shadow.vy += (Math.random() - 0.5) * 0.3;
-      }
-      
-      // Wrap around edges (gentle, not bouncing)
-      if (shadow.x < -shadow.size * 2) {
-        shadow.x = w + shadow.size;
-      }
-      if (shadow.x > w + shadow.size * 2) {
-        shadow.x = -shadow.size;
-      }
-      if (shadow.y < -shadow.size * 2) {
-        shadow.y = h + shadow.size;
-      }
-      if (shadow.y > h + shadow.size * 2) {
-        shadow.y = -shadow.size;
-      }
-      
-      // Limit max speed (slow)
-      const speed = Math.sqrt(shadow.vx ** 2 + shadow.vy ** 2);
-      if (speed > 3) {
-        shadow.vx = (shadow.vx / speed) * 3;
-        shadow.vy = (shadow.vy / speed) * 3;
-      }
-      
-      // Gentle friction
-      shadow.vx *= 0.995;
-      shadow.vy *= 0.995;
-    }
-    
-    // Draw shadows - JELLYFISH-LIKE aquatic creatures
-    for (const shadow of shadows) {
-      ctx.save();
-      
-      const t = time * 0.001 + shadow.timeOffset;
-      const pulse = Math.sin(shadow.pulsePhase) * 0.15 + 1;  // Pulsing bell
-      const bellSize = shadow.bellSize * pulse;
-      
-      ctx.translate(shadow.x, shadow.y);
-      ctx.rotate(shadow.angle);
-      
-      // Draw jellyfish bell (umbrella-shaped top) - simplified for performance
-      ctx.beginPath();
-      const bellSegments = 12;  // Reduced from 20
-      for (let i = 0; i <= bellSegments; i++) {
-        const angle = (i / bellSegments) * Math.PI * 2;
-        const radius = bellSize * (0.7 + Math.sin(angle * 3 + t) * 0.1);  // Slight waviness
-        const x = Math.cos(angle) * radius;
-        const y = Math.sin(angle) * radius - bellSize * 0.3;  // Positioned above center
-        if (i === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-      }
-      ctx.closePath();
-      
-      // Calculate illumination from light source (cached) - softer falloff
-      const dx = shadow.x - light.x;
-      const dy = shadow.y - light.y;
-      const distToLightSq = light.x > 0 ? dx * dx + dy * dy : 999999;
-      const lightRadius = 200;
-      const lightRadiusSq = lightRadius * lightRadius;
-      // Softer, more gradual falloff - less harsh
-      const illumination = distToLightSq < lightRadiusSq ? Math.pow(1 - Math.sqrt(distToLightSq) / lightRadius, 2.5) : 0;
-      
-      // Fill bell - subtle illumination, matching tentacles exactly
-      const baseAlpha = 0.8;
-      // Very subtle brightness increase - no harsh edges, no color changes
-      const litAlpha = baseAlpha + illumination * 0.08;
-      ctx.fillStyle = `rgba(5, 3, 8, ${litAlpha})`;
-      ctx.shadowBlur = 12;
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-      ctx.fill();
-      
-      // No blue screen effect - keep colors consistent
-      
-      // Draw tentacles hanging down from bell - same illumination as bell
-      const tentacleLength = shadow.size * 1.5;
-      for (let i = 0; i < shadow.tentacleCount; i++) {
-        const tentacleAngle = (i / shadow.tentacleCount) * Math.PI * 2;
-        const startX = Math.cos(tentacleAngle) * bellSize * 0.6;
-        const startY = Math.sin(tentacleAngle) * bellSize * 0.3;
-        
-        // Build tentacle path points - fewer segments
-        const tentacleSegments = 8;  // Further reduced from 10
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        
-        for (let j = 1; j <= tentacleSegments; j++) {
-          const t_tent = j / tentacleSegments;
-          const x = startX + Math.sin(t * 1.5 + i + t_tent * 2) * bellSize * 0.15;
-          const y = startY + t_tent * tentacleLength + Math.sin(t * 2 + i * 2 + t_tent * 3) * bellSize * 0.1;
-          ctx.lineTo(x, y);
-        }
-        
-        // Draw tentacle with EXACT same illumination as bell (matching colors)
-        const tentacleBaseAlpha = 0.8;  // Same as bell
-        const tentacleAlpha = tentacleBaseAlpha + illumination * 0.08;  // Same formula
-        ctx.strokeStyle = `rgba(5, 3, 8, ${tentacleAlpha})`;
-        ctx.lineWidth = bellSize * 0.1;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.shadowBlur = 6;
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-        ctx.stroke();
-      }
-      
-      ctx.restore();
-    }
-    
-    // Draw light source (ROV spotlight) - simplified for performance
-    if (light.x > 0 && light.x < w) {
-      // Fewer layers for better performance
-      const grad = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, 200);
-      grad.addColorStop(0, 'rgba(200, 240, 255, 0.15)');
-      grad.addColorStop(0.5, 'rgba(150, 200, 255, 0.08)');
-      grad.addColorStop(1, 'transparent');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(light.x, light.y, 200, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // Bright core
-      const core = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, 16);
-      core.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-      core.addColorStop(0.6, 'rgba(220, 240, 255, 0.5)');
-      core.addColorStop(1, 'transparent');
-      ctx.fillStyle = core;
-      ctx.beginPath();
-      ctx.arc(light.x, light.y, 16, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    
-    // Marine snow
-    for (const p of particles) {
-      p.y += p.speed;
-      p.x += Math.sin(time * 0.001 + p.y * 5) * 0.0003;
-      if (p.y > 1.05) {
-        p.y = -0.05;
-        p.x = Math.random();
-      }
-      ctx.fillStyle = `rgba(150, 180, 200, ${p.alpha})`;
-      ctx.beginPath();
-      ctx.arc(p.x * w, p.y * h, p.size, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    
-    // Vignette
-    const vignette = ctx.createRadialGradient(w/2, h/2, h * 0.25, w/2, h/2, h * 0.85);
-    vignette.addColorStop(0, 'transparent');
-    vignette.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
-    ctx.fillStyle = vignette;
-    ctx.fillRect(0, 0, w, h);
-    
-    time += 16;
-    requestAnimationFrame(render);
-  }
-  
-  render();
+  addJournalEntry("Dive 4914: Shadows moving across the seafloor. Multiple appendages detected. Origin unknown.");
+
+  return windowId;
 }
 
 // ============================================
@@ -3927,6 +3676,13 @@ function openUnexpectedWindow(options = {}) {
 }
 
 function closeWindow(windowId) {
+  // Clean up active scene if it exists
+  if (activeScenes.has(windowId)) {
+    const scene = activeScenes.get(windowId);
+    scene.cleanup();
+    activeScenes.delete(windowId);
+  }
+
   const el = document.getElementById(windowId);
   if (el) {
     if (sfx) sfx.play('close');
