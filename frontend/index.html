@@ -2448,7 +2448,13 @@
   </div>
 
   <script src="visual-toolkit.min.js"></script>
-  <script src="audio-engine.js"></script>
+  <script src="music-playground.umd.js"></script>
+  <!-- Expose music-playground as AudioEngine for backward compatibility -->
+  <script>
+    if (window.MusicPlayground) {
+      window.AudioEngine = window.MusicPlayground;
+    }
+  </script>
   <script src="os.js"></script>
 </body>
 </html>
