@@ -2031,7 +2031,7 @@ function startLeviathanCanvas(canvasId, windowId) {
 
 function openROVExteriorScene() {
   const windowId = generateId('window');
-  
+
   const windowEl = document.createElement('div');
   windowEl.className = 'window video-window opening';
   windowEl.id = windowId;
@@ -2039,7 +2039,7 @@ function openROVExteriorScene() {
   windowEl.style.top = `${randomInt(50, 150)}px`;
   windowEl.style.width = '600px';
   windowEl.style.height = '450px';
-  
+
   windowEl.innerHTML = `
     <div class="window-header">
       <div class="window-controls">
@@ -2058,343 +2058,31 @@ function openROVExteriorScene() {
       <div style="position: absolute; bottom: 12px; right: 12px; font-size: 9px; color: rgba(77, 208, 225, 0.5);">03:21:44</div>
     </div>
   `;
-  
+
   document.getElementById('windows-container').appendChild(windowEl);
   state.openWindows.push(windowId);
-  
+
   const header = windowEl.querySelector('.window-header');
   makeDraggable(windowEl, header);
   header.style.cursor = 'grab';
   makeResizable(windowEl);
-  
-  setTimeout(() => {
-    startROVExteriorCanvas(`rov-ext-canvas-${windowId}`, windowId);
+
+  setTimeout(async () => {
+    const canvas = document.getElementById(`rov-ext-canvas-${windowId}`);
+    const ROVExteriorScene = window.VisualToolkit?.scenes?.deepSea?.rovExterior;
+
+    if (ROVExteriorScene) {
+      await ROVExteriorScene.init(canvas, { intensity: 0.7, duration: Infinity });
+      activeScenes.set(windowId, ROVExteriorScene);
+    }
   }, 100);
-  
+
   if (sfx) sfx.play('sonarPing');
   addJournalEntry("External camera feed: Monitoring ROV Nereid descent.");
-  
+
   return windowId;
 }
 
-function startROVExteriorCanvas(canvasId, windowId) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  
-  const ctx = canvas.getContext('2d');
-  let time = 0;
-  
-  // === VISUAL TOOLKIT CONSTANTS ===
-  // Timing multipliers (slower = more premium)
-  const timing = {
-    glacial: 0.0008,   // ROV rotation
-    verySlow: 0.001,   // drift
-    slow: 0.002,       // light pulse
-  };
-  
-  // Color palettes from toolkit
-  const deepSea = {
-    surface: '#020810',
-    mid: '#051018',
-    deep: '#020a12',
-    abyss: '#010508',
-  };
-  
-  const materials = {
-    rovYellow: { highlight: '#e8a832', mid: '#d4942a', shadow: '#b87820', outline: '#8a5a15' },
-    flotation: { fill: '#ff6b35', outline: '#cc4420' },
-    metal: { light: '#666', mid: '#444', dark: '#333', darkest: '#222' },
-    lens: { body: '#1a1a2e', glint: 'rgba(100, 150, 200, 0.5)' },
-    panel: { line: 'rgba(100, 60, 20, 0.5)' },
-  };
-  
-  // Marine snow particles (varied sizes, speeds, alphas - uniformity looks artificial)
-  const particles = [];
-  for (let i = 0; i < 80; i++) {
-    particles.push({
-      x: Math.random(),
-      y: Math.random(),
-      size: Math.random() * 2 + 0.5,      // 0.5 - 2.5px varied
-      speed: Math.random() * 0.008 + 0.003,
-      alpha: Math.random() * 0.5 + 0.2,   // 0.2 - 0.7 varied
-    });
-  }
-  
-  // ROV state
-  const rov = { x: 0.5, y: 0.45 };
-  
-  function resize() {
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * window.devicePixelRatio;
-    canvas.height = rect.height * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-  }
-  resize();
-  
-  const resizeObserver = new ResizeObserver(resize);
-  resizeObserver.observe(canvas);
-  
-  function isWindowOpen() {
-    return document.getElementById(windowId) !== null;
-  }
-  
-  // === TOOLKIT HELPER: Organic drift (two sine waves combined) ===
-  function drift(t) {
-    return {
-      x: Math.sin(t * timing.verySlow) * 0.02 + Math.sin(t * timing.slow) * 0.01,
-      y: Math.cos(t * timing.verySlow * 1.1) * 0.02 + Math.cos(t * timing.slow * 0.9) * 0.006,
-      rotation: Math.sin(t * timing.glacial) * 0.03,
-    };
-  }
-  
-  // === TOOLKIT HELPER: 3D material gradient ===
-  function material3D(x, y, width, height, colors) {
-    const grad = ctx.createLinearGradient(x, y, x, y + height);
-    grad.addColorStop(0, colors.highlight);
-    grad.addColorStop(0.5, colors.mid);
-    grad.addColorStop(1, colors.shadow);
-    return grad;
-  }
-  
-  // === TOOLKIT HELPER: Offset shadow for depth ===
-  function drawWithShadow(offsetX, offsetY, drawFn) {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-    ctx.save();
-    ctx.translate(offsetX, offsetY);
-    drawFn();
-    ctx.restore();
-  }
-  
-  // === TOOLKIT HELPER: Panel lines ===
-  function drawPanelLines(x, y, width, height, positions) {
-    ctx.strokeStyle = materials.panel.line;
-    ctx.lineWidth = 1;
-    for (const pos of positions) {
-      const lineX = x + width * pos;
-      ctx.beginPath();
-      ctx.moveTo(lineX, y);
-      ctx.lineTo(lineX, y + height);
-      ctx.stroke();
-    }
-  }
-  
-  // === TOOLKIT HELPER: Grille pattern ===
-  function drawGrille(x, y, width, height, lineCount) {
-    ctx.strokeStyle = materials.metal.light;
-    ctx.lineWidth = 2;
-    const spacing = height / (lineCount + 1);
-    for (let i = 1; i <= lineCount; i++) {
-      const lineY = y + spacing * i;
-      ctx.beginPath();
-      ctx.moveTo(x, lineY);
-      ctx.lineTo(x + width, lineY);
-      ctx.stroke();
-    }
-  }
-  
-  // === TOOLKIT HELPER: Lens with glint ===
-  function drawLens(x, y, outerR, innerR) {
-    ctx.fillStyle = materials.metal.darkest;
-    ctx.beginPath();
-    ctx.arc(x, y, outerR, 0, Math.PI * 2);
-    ctx.fill();
-    
-    ctx.fillStyle = materials.lens.body;
-    ctx.beginPath();
-    ctx.arc(x, y, innerR, 0, Math.PI * 2);
-    ctx.fill();
-    
-    ctx.fillStyle = materials.lens.glint;
-    ctx.beginPath();
-    ctx.arc(x - 2, y - 2, innerR * 0.4, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  
-  // === TOOLKIT HELPER: Light with glow ===
-  function drawLight(x, y, radius, isOn) {
-    ctx.fillStyle = materials.metal.mid;
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.fill();
-    
-    if (isOn) {
-      const intensity = 0.8 + Math.sin(time * timing.slow) * 0.1;
-      
-      // Multi-layer glow (toolkit principle: single glow looks flat)
-      const glow = ctx.createRadialGradient(x, y, 0, x, y, radius * 8);
-      glow.addColorStop(0, `rgba(255, 250, 230, ${intensity})`);
-      glow.addColorStop(0.2, `rgba(255, 240, 200, ${intensity * 0.5})`);
-      glow.addColorStop(1, 'rgba(255, 240, 200, 0)');
-      ctx.fillStyle = glow;
-      ctx.beginPath();
-      ctx.arc(x, y, radius * 8, 0, Math.PI * 2);
-      ctx.fill();
-      
-      ctx.fillStyle = `rgba(255, 255, 240, ${intensity})`;
-      ctx.beginPath();
-      ctx.arc(x, y, radius * 0.6, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-  
-  // === TOOLKIT HELPER: Tether with wobble ===
-  function drawTether(startX, startY, endY, wobbleAmt) {
-    ctx.strokeStyle = 'rgba(80, 80, 80, 0.6)';
-    ctx.lineWidth = 3;
-    ctx.setLineDash([8, 4]);
-    const midX = startX + Math.sin(time * timing.slow) * wobbleAmt;
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(midX, endY);
-    ctx.stroke();
-    ctx.setLineDash([]);
-  }
-  
-  function drawROV(x, y, scale) {
-    ctx.save();
-    ctx.translate(x, y);
-    
-    const d = drift(time);
-    ctx.rotate(d.rotation);
-    ctx.scale(scale, scale);
-    
-    const bodyW = 80;
-    const bodyH = 50;
-    
-    // Shadow first (toolkit: offset shadows create depth)
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-    ctx.fillRect(-bodyW/2 + 4, -bodyH/2 + 4, bodyW, bodyH);
-    
-    // Main body with 3D gradient
-    ctx.fillStyle = material3D(-bodyW/2, -bodyH/2, bodyW, bodyH, materials.rovYellow);
-    ctx.fillRect(-bodyW/2, -bodyH/2, bodyW, bodyH);
-    
-    // Outline
-    ctx.strokeStyle = materials.rovYellow.outline;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(-bodyW/2, -bodyH/2, bodyW, bodyH);
-    
-    // Panel lines
-    drawPanelLines(-bodyW/2, -bodyH/2, bodyW, bodyH, [0.25, 0.75]);
-    
-    // Flotation foam (top)
-    ctx.fillStyle = materials.flotation.fill;
-    ctx.fillRect(-bodyW/2 + 5, -bodyH/2 - 15, bodyW - 10, 15);
-    ctx.strokeStyle = materials.flotation.outline;
-    ctx.strokeRect(-bodyW/2 + 5, -bodyH/2 - 15, bodyW - 10, 15);
-    
-    // Thrusters
-    ctx.fillStyle = materials.metal.dark;
-    ctx.fillRect(-bodyW/2 - 15, -10, 15, 20);
-    ctx.fillRect(bodyW/2, -10, 15, 20);
-    
-    // Thruster grilles
-    drawGrille(-bodyW/2 - 15, -10, 15, 20, 4);
-    drawGrille(bodyW/2, -10, 15, 20, 4);
-    
-    // Camera lens
-    drawLens(0, bodyH/2 + 10, 12, 8);
-    
-    // Lights
-    drawLight(-25, bodyH/2 + 5, 8, true);
-    drawLight(25, bodyH/2 + 5, 8, true);
-    
-    // Manipulator arm
-    ctx.strokeStyle = materials.metal.light;
-    ctx.lineWidth = 4;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(-bodyW/2 + 10, bodyH/2);
-    ctx.lineTo(-bodyW/2 + 5, bodyH/2 + 20);
-    ctx.lineTo(-bodyW/2 + 15, bodyH/2 + 25);
-    ctx.stroke();
-    
-    // Tether
-    drawTether(0, -bodyH/2 - 15, -bodyH/2 - 100, 10);
-    
-    ctx.restore();
-  }
-  
-  function render() {
-    if (!isWindowOpen()) {
-      resizeObserver.disconnect();
-      return;
-    }
-    
-    const w = canvas.width / window.devicePixelRatio;
-    const h = canvas.height / window.devicePixelRatio;
-    
-    // Deep water background (toolkit: 4-stop gradient for depth)
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-    bgGrad.addColorStop(0, deepSea.surface);
-    bgGrad.addColorStop(0.3, deepSea.mid);
-    bgGrad.addColorStop(0.6, deepSea.deep);
-    bgGrad.addColorStop(1, deepSea.abyss);
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, w, h);
-    
-    // Subtle caustics (very faint light from above)
-    for (let i = 0; i < 3; i++) {
-      const cx = (Math.sin(time * timing.glacial + i) * 0.3 + 0.5) * w;
-      const cGrad = ctx.createRadialGradient(cx, h * 0.1, 0, cx, h * 0.1, 150);
-      cGrad.addColorStop(0, 'rgba(100, 150, 200, 0.03)');
-      cGrad.addColorStop(1, 'transparent');
-      ctx.fillStyle = cGrad;
-      ctx.fillRect(0, 0, w, h * 0.4);
-    }
-    
-    // Marine snow (toolkit: varied properties prevent artificial look)
-    for (const p of particles) {
-      p.y -= p.speed;
-      if (p.y < -0.05) {
-        p.y = 1.05;
-        p.x = Math.random();
-      }
-      ctx.beginPath();
-      ctx.arc(p.x * w, p.y * h, p.size, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(180, 200, 220, ${p.alpha})`;
-      ctx.fill();
-    }
-    
-    // ROV with organic drift
-    const d = drift(time);
-    const rovX = (rov.x + d.x) * w;
-    const rovY = (rov.y + d.y) * h;
-    drawROV(rovX, rovY, 1.2);
-    
-    // Light beams into darkness
-    ctx.save();
-    ctx.translate(rovX, rovY);
-    ctx.rotate(d.rotation);
-    
-    const beamGrad = ctx.createLinearGradient(0, 50, 0, h * 0.6);
-    beamGrad.addColorStop(0, 'rgba(255, 250, 230, 0.15)');
-    beamGrad.addColorStop(0.5, 'rgba(200, 220, 255, 0.05)');
-    beamGrad.addColorStop(1, 'transparent');
-    
-    ctx.fillStyle = beamGrad;
-    ctx.beginPath();
-    ctx.moveTo(-35, 50);
-    ctx.lineTo(-80, h * 0.5);
-    ctx.lineTo(80, h * 0.5);
-    ctx.lineTo(35, 50);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-    
-    // Vignette (toolkit: darkens edges, focuses center)
-    const vignette = ctx.createRadialGradient(w/2, h/2, h * 0.3, w/2, h/2, h * 0.8);
-    vignette.addColorStop(0, 'transparent');
-    vignette.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
-    ctx.fillStyle = vignette;
-    ctx.fillRect(0, 0, w, h);
-    
-    time += 16;
-    requestAnimationFrame(render);
-  }
-  
-  render();
-}
 
 // ============================================
 // THE WALL - Massive surface with tracking eyes
