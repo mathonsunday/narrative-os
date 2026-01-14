@@ -53,16 +53,6 @@ RENAME_PATTERNS = {
     ],
 }
 
-# "Helpful" folder names for organization
-ORGANIZATION_FOLDERS = [
-    "Organized_for_you",
-    "Frequently_accessed",
-    "Priority_items",
-    "Suggested_grouping",
-    "Curated_collection",
-    "Optimized_workspace",
-]
-
 # Journals/messages that explain what "helpful" thing was done
 HELPFUL_MESSAGES = [
     "I noticed you access this file frequently, so I've prioritized it for you.",
@@ -155,33 +145,6 @@ def chaos_rename():
         return False
 
 
-def chaos_organize():
-    """Move files into a 'helpful' organization folder."""
-    target = get_random_file()
-    if not target:
-        return False
-    
-    folder_name = random.choice(ORGANIZATION_FOLDERS)
-    org_folder = DESKTOP / folder_name
-    
-    try:
-        org_folder.mkdir(exist_ok=True)
-        new_path = org_folder / target.name
-        
-        if new_path.exists():
-            return False
-        
-        target.rename(new_path)
-        emit_event("chaos_organize", {
-            "filename": target.name,
-            "folder": folder_name,
-            "message": random.choice(HELPFUL_MESSAGES),
-        })
-        return True
-    except OSError:
-        return False
-
-
 def chaos_notification():
     """Send a 'helpful' notification without actually doing anything."""
     messages = [
@@ -225,10 +188,9 @@ def chaos_open_file():
 def run_chaos_cycle():
     """Run one chaos cycle - pick a random action and do it."""
     actions = [
-        (chaos_notification, 0.4),  # 40% - just notifications
-        (chaos_open_file, 0.25),    # 25% - suggest opening a file
-        (chaos_rename, 0.2),        # 20% - rename something
-        (chaos_organize, 0.15),     # 15% - move to "organization" folder
+        (chaos_notification, 0.45),  # 45% - just notifications
+        (chaos_open_file, 0.30),     # 30% - suggest opening a file
+        (chaos_rename, 0.25),        # 25% - rename something
     ]
     
     # Weighted random selection

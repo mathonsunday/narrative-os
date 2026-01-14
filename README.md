@@ -1,119 +1,77 @@
 # Narrative OS
 
-An experimental operating system interface designed for deep-sea marine biologist Dr. Mira Petrovic. This project explores innovative user experiences for operating systems through a narrative-driven, character-specific interface.
+An experimental operating system interface that tells stories through its chaos.
 
-## Overview
+## What is this?
 
-Narrative OS combines a real backend filesystem (running in Docker) with a highly stylized frontend that tells a story. The system simulates the research environment of a deep-sea biologist, complete with ROV footage, specimen databases, grant proposals, and mysterious discoveries.
+Narrative OS is an art project disguised as an operating system. It features:
 
-## Features
+- **A desktop that lies to you** — Files wander, rename themselves, and get "helpfully" reorganized
+- **Fake personalization** — The system earnestly recommends things based on zero actual data
+- **An IT department that cares too much** — MBARI IT sends helpful notifications about security policies
+- **Deep sea aesthetics** — You're Dr. Mira Petrovic, a marine biologist studying the abyss
 
-### ROV Footage Viewer
+The interface looks comfortable and helpful. Underneath, nothing works the way you'd expect.
 
-Interactive deep-sea exploration scenes rendered with Canvas:
+## Running locally
 
-- **The Wall** (`Dive_4914_wall_contact.mp4`) - A massive organic surface with tracking eyes that respond to your light source
-- **Seekers** (`Dive_4913_biolum_swarm.mp4`) - A swarm of bioluminescent organisms that react to cursor movement (approach, flee, orbit)
-- **Shadows** (`Dive_4914_midwater_shadows.mp4`) - Jellyfish-like creatures drifting through the depths, illuminated by your ROV light
+### Frontend only (simulation mode)
 
-All scenes feature:
-- Real-time Canvas rendering
-- Mouse-controlled light source
-- Marine snow particle effects
-- Depth and timestamp HUD overlays
-- Journal entries documenting discoveries
+Just open `frontend/index.html` in a browser. The chaos runs locally via JavaScript.
 
-### Visual Effects Library
+### Full backend (real chaos)
 
-Built using the [visual-toolkit](https://github.com/mathonsunday/visual-toolkit) library, which provides:
-
-- Deep-sea color palettes (`deepSea`, `bioluminescence`, `darkness`)
-- Organic motion functions (`drift`, `bob`, `pulse`, `waver`)
-- Seeker swarm behavior (light-reactive creatures)
-- Organic surface rendering with Simplex noise
-- Material gradients and depth effects
-- Marine snow particle systems
-
-### Audio Engine
-
-Ambient deep-sea soundscape powered by [music-playground](https://github.com/mathonsunday/music-playground):
-
-- Deep sea ambience (configurable depth, intensity, mystery tones)
-- Hydrophone crackle and static
-- ROV mechanical hum
-- Occasional distant creature sounds
-- Web Audio API-based real-time generation
-
-### Character-Driven Experience
-
-- **Dr. Mira Petrovic** - Deep-sea marine biologist at MBARI
-- Personalized file organization
-- Journal entries documenting research
-- IT notifications (security, system updates)
-- Chaos events that add narrative interest
-
-### Backend Integration
-
-- Real filesystem running in Docker container
-- WebSocket connection for real-time updates
-- Python daemons generating system events:
-  - `daemon_chaos.py` - File movements, renames, notifications
-  - `daemon_journal.py` - Research journal entries
-  - `daemon_watcher.py` - Filesystem monitoring
-
-## Getting Started
-
-### Prerequisites
-
-- Docker and Docker Compose
-- Modern web browser with WebSocket support
-
-### Running the System
-
-1. Start the backend:
 ```bash
 docker-compose up --build
 ```
 
-2. Open `frontend/index.html` in your browser
+Then open http://localhost:8080
 
-3. Click anywhere to initialize audio (browser requirement)
+The backend runs real daemons that:
+- Watch and manipulate files in a containerized filesystem
+- Send events via WebSocket to the frontend
+- Generate journal entries based on "observations"
 
-### Development
-
-The frontend is vanilla JavaScript with Canvas API. The backend is Python with WebSocket support.
-
-## Architecture
-
-- **Frontend**: Vanilla JavaScript, Canvas API, Web Audio API
-- **Backend**: Python with WebSocket server
-- **Containerization**: Docker for isolated filesystem
-- **Visual Library**: [visual-toolkit](https://github.com/mathonsunday/visual-toolkit)
-- **Audio Library**: [music-playground](https://github.com/mathonsunday/music-playground)
-
-## File Structure
+## Project structure
 
 ```
 narrative-os/
 ├── frontend/
-│   ├── index.html          # Main UI
-│   ├── os.js              # Frontend logic
-│   ├── audio-engine.js     # Audio system
-│   └── visual-toolkit.min.js  # Visual effects library
+│   ├── index.html      # Main UI (Abyss theme)
+│   └── os.js           # Frontend logic, chaos simulation, WebSocket
 ├── backend/
-│   ├── server/
-│   │   └── main.py        # WebSocket server
-│   ├── daemons/           # Background processes
-│   └── filesystem/        # Real filesystem root
-└── docker-compose.yml     # Container orchestration
+│   ├── server/         # Python WebSocket server
+│   ├── daemons/        # Chaos generators (watcher, chaos, journal)
+│   └── filesystem/     # Dr. Petrovic's files
+└── docker-compose.yml
 ```
 
-## Credits
+## The character
 
-- Visual effects powered by [visual-toolkit](https://github.com/mathonsunday/visual-toolkit)
-- Audio engine adapted from [music-playground](https://github.com/mathonsunday/music-playground)
-- Inspired by experimental OS interfaces and narrative-driven design
+Dr. Mira Petrovic is a deep-sea marine biologist at MBARI (Monterey Bay Aquarium Research Institute). Her desktop contains:
+
+- ROV dive footage
+- Observation logs
+- Spreadsheets of bioluminescence readings
+- The occasional existential note
+
+The system "helps" her by reorganizing her research, enhancing her images with dramatic CSS filters, and sending IT security reminders about password policies.
+
+## Tech
+
+- Vanilla HTML/CSS/JS frontend (no frameworks)
+- Python backend with `websockets`, `watchdog`, `aiofiles`
+- Docker for containerization
+- CSS animations for bioluminescent effects and creature simulations
+
+## Aesthetics
+
+The current theme is "Abyss" — dark backgrounds, bioluminescent accent colors, deep sea creatures swimming through video previews. The UI should feel like operating a research station at the bottom of the ocean.
 
 ## License
 
-[Your license here]
+MIT — do whatever you want with this.
+
+---
+
+*"The system is trying to help. It doesn't understand why you keep undoing its improvements."*

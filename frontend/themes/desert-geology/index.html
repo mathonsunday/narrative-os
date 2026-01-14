@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Narrative OS - Desert Geology</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      /* Desert colors - sand, rock, sunset */
+      --desert-sand: #d4c5a9;
+      --desert-dark: #8b7355;
+      --desert-dune: #c4a882;
+      --rock-gray: #5a5a5a;
+      --rock-dark: #3a3a3a;
+      --sunset-orange: #d97757;
+      --sunset-red: #b85c3a;
+      --sky-blue: #87ceeb;
+      --sky-deep: #4a6fa5;
+      
+      /* Accent colors */
+      --geo-amber: rgba(212, 149, 87, 0.8);
+      --geo-glow: rgba(212, 149, 87, 0.4);
+      --geo-glow-dim: rgba(212, 149, 87, 0.15);
+      --text-primary: rgba(220, 210, 195, 0.95);
+      --text-secondary: rgba(180, 170, 155, 0.7);
+      --text-muted: rgba(140, 130, 115, 0.5);
+      --accent-red: rgba(184, 92, 58, 0.8);
+      --accent-yellow: rgba(212, 149, 87, 0.8);
+      --accent-green: rgba(120, 150, 100, 0.7);
+    }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--desert-dark);
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* Desktop - desert landscape */
+    .desktop {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      padding: 30px;
+      padding-bottom: 80px;
+      background: 
+        /* Horizon gradient - sky to sand */
+        linear-gradient(180deg, 
+          var(--sky-deep) 0%,
+          var(--sky-blue) 20%,
+          rgba(212, 197, 169, 0.3) 40%,
+          var(--desert-dune) 60%,
+          var(--desert-dark) 100%
+        ),
+        /* Heat haze effect */
+        radial-gradient(ellipse at 50% 60%, rgba(212, 149, 87, 0.1) 0%, transparent 60%),
+        /* Rock formations in distance */
+        radial-gradient(ellipse at 20% 80%, rgba(90, 90, 90, 0.2) 0%, transparent 30%),
+        radial-gradient(ellipse at 80% 75%, rgba(90, 90, 90, 0.15) 0%, transparent 25%);
+    }
+
+    /* Sand particles drifting (like marine snow) */
+    .sand-particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(212, 197, 169, 0.4);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: sandDrift 20s linear infinite;
+    }
+
+    .sand-particle:nth-child(odd) {
+      width: 3px;
+      height: 3px;
+      background: rgba(196, 168, 130, 0.3);
+      animation-duration: 25s;
+    }
+
+    @keyframes sandDrift {
+      0% { transform: translateY(-20px) translateX(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 0.6; }
+      100% { transform: translateY(100vh) translateX(40px); opacity: 0; }
+    }
+
+    /* Greeting */
+    .greeting {
+      position: absolute;
+      top: 30px;
+      left: 30px;
+      font-size: 18px;
+      font-weight: 300;
+      color: var(--text-primary);
+      letter-spacing: 0.1em;
+      animation: fadeIn 1s ease;
+      z-index: 5;
+    }
+
+    .greeting-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      font-weight: 300;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* File/window containers */
+    #files-container {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    #windows-container {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* File icons - rock/mineral themed */
+    .file-icon {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: grab;
+      transition: all 0.4s ease;
+      user-select: none;
+      z-index: 1;
+      pointer-events: auto;
+    }
+
+    .file-icon:hover {
+      transform: scale(1.1);
+    }
+
+    .file-icon:active {
+      cursor: grabbing;
+    }
+
+    .file-icon .icon {
+      width: 60px;
+      height: 60px;
+      background: radial-gradient(
+        circle at 40% 40%,
+        var(--geo-amber) 0%,
+        rgba(212, 149, 87, 0.4) 40%,
+        rgba(139, 115, 85, 0.2) 70%,
+        transparent 100%
+      );
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 
+        0 0 20px var(--geo-glow),
+        0 0 40px rgba(212, 149, 87, 0.2),
+        inset 0 0 15px rgba(212, 149, 87, 0.1),
+        0 2px 8px rgba(0, 0, 0, 0.3);
+      animation: mineralPulse 5s ease-in-out infinite;
+      border: 1px solid rgba(212, 149, 87, 0.3);
+      margin-bottom: 10px;
+      transform: rotate(-2deg);
+    }
+
+    .file-icon:nth-child(even) .icon {
+      transform: rotate(2deg);
+      animation-delay: -2.5s;
+    }
+
+    @keyframes mineralPulse {
+      0%, 100% { 
+        box-shadow: 
+          0 0 20px var(--geo-glow),
+          0 0 40px rgba(212, 149, 87, 0.2);
+      }
+      50% { 
+        box-shadow: 
+          0 0 30px var(--geo-glow),
+          0 0 60px rgba(212, 149, 87, 0.3);
+      }
+    }
+
+    .file-icon .label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 140px;
+      letter-spacing: 0.05em;
+      line-height: 1.3;
+      word-break: break-word;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    /* Window - field notebook style */
+    .window {
+      position: absolute;
+      background: rgba(220, 210, 195, 0.95);
+      border: 2px solid rgba(139, 115, 85, 0.4);
+      border-radius: 4px;
+      box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      overflow: hidden;
+      min-width: 280px;
+      min-height: 200px;
+      z-index: 10;
+      pointer-events: auto;
+    }
+
+    .window.opening {
+      animation: windowOpen 0.4s ease forwards;
+    }
+
+    @keyframes windowOpen {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .window-header {
+      background: linear-gradient(180deg, rgba(196, 168, 130, 0.8) 0%, rgba(139, 115, 85, 0.6) 100%);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 2px solid rgba(139, 115, 85, 0.3);
+      cursor: grab;
+    }
+
+    .window-header:active {
+      cursor: grabbing;
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 6px;
+    }
+
+    .window-control {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .control-close {
+      background: var(--accent-red);
+    }
+
+    .control-close:hover {
+      background: rgba(184, 92, 58, 1);
+      transform: scale(1.1);
+    }
+
+    .control-minimize {
+      background: var(--accent-yellow);
+    }
+
+    .control-minimize:hover {
+      background: rgba(212, 149, 87, 1);
+      transform: scale(1.1);
+    }
+
+    .control-maximize {
+      background: var(--accent-green);
+    }
+
+    .control-maximize:hover {
+      background: rgba(120, 150, 100, 1);
+      transform: scale(1.1);
+    }
+
+    .window-title {
+      flex: 1;
+      font-size: 12px;
+      color: var(--text-primary);
+      font-weight: 500;
+      letter-spacing: 0.05em;
+    }
+
+    .window-badge {
+      font-size: 10px;
+      color: var(--text-secondary);
+      background: rgba(139, 115, 85, 0.3);
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    /* Journal */
+    #journal {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      width: 320px;
+      max-height: 200px;
+      background: rgba(220, 210, 195, 0.95);
+      border: 2px solid rgba(139, 115, 85, 0.4);
+      border-radius: 4px;
+      padding: 12px;
+      font-size: 10px;
+      color: var(--text-primary);
+      overflow-y: auto;
+      z-index: 5;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    #journal::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #journal::-webkit-scrollbar-track {
+      background: rgba(139, 115, 85, 0.1);
+    }
+
+    #journal::-webkit-scrollbar-thumb {
+      background: rgba(139, 115, 85, 0.4);
+      border-radius: 3px;
+    }
+
+    .journal-entry {
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(139, 115, 85, 0.2);
+      line-height: 1.4;
+    }
+
+    .journal-entry:last-child {
+      border-bottom: none;
+    }
+
+    .journal-entry.new {
+      animation: journalPulse 0.5s ease;
+    }
+
+    @keyframes journalPulse {
+      0% { background: rgba(212, 149, 87, 0.2); }
+      100% { background: transparent; }
+    }
+
+    /* Toast notifications */
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(220, 210, 195, 0.95);
+      border: 2px solid rgba(212, 149, 87, 0.5);
+      border-radius: 4px;
+      padding: 12px 16px;
+      font-size: 11px;
+      color: var(--text-primary);
+      z-index: 1000;
+      animation: toastSlide 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    @keyframes toastSlide {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Spreadsheet preview */
+    .spreadsheet-preview {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .spreadsheet-preview table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+      margin-bottom: 10px;
+    }
+
+    .spreadsheet-preview th {
+      background: rgba(139, 115, 85, 0.3);
+      color: var(--text-primary);
+      padding: 8px;
+      text-align: left;
+      border-bottom: 2px solid rgba(139, 115, 85, 0.4);
+      font-weight: 500;
+    }
+
+    .spreadsheet-preview td {
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(139, 115, 85, 0.2);
+      color: var(--text-secondary);
+    }
+
+    .spreadsheet-preview tr:hover td {
+      background: rgba(212, 149, 87, 0.1);
+    }
+
+    .spreadsheet-preview .highlight {
+      background: rgba(212, 149, 87, 0.2);
+      color: var(--sunset-red);
+      font-weight: 500;
+    }
+
+    .spreadsheet-note {
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-top: 10px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="desktop" id="desktop">
+    <!-- Sand particles -->
+    <div id="sand-particles"></div>
+    
+    <!-- Greeting -->
+    <div class="greeting">
+      <div>Field Station OS</div>
+      <div class="greeting-sub">Dr. Alex Chen - Geological Survey</div>
+    </div>
+
+    <!-- Files container -->
+    <div id="files-container"></div>
+
+    <!-- Windows container -->
+    <div id="windows-container"></div>
+
+    <!-- Journal -->
+    <div id="journal">
+      <div id="journal-entries"></div>
+    </div>
+  </div>
+
+  <script src="../../audio-engine.js"></script>
+  <script src="../../visual-toolkit.min.js"></script>
+  <script src="os.js"></script>
+</body>
+</html>
