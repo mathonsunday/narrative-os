@@ -1682,14 +1682,9 @@ function openLeviathanScene() {
   // Make window resizable
   makeResizable(windowEl);
   
-  setTimeout(async () => {
-    const canvas = document.getElementById(`leviathan-canvas-${windowId}`);
-    const LeviathanScene = window.VisualToolkit?.scenes?.deepSea?.leviathan;
-
-    if (LeviathanScene) {
-      await LeviathanScene.init(canvas, { intensity: 0.8, duration: Infinity });
-      activeScenes.set(windowId, LeviathanScene);
-    }
+  // Start the canvas animation
+  setTimeout(() => {
+    startLeviathanCanvas(`leviathan-canvas-${windowId}`, windowId);
   }, 100);
   
   // Play tension audio for Leviathan scene
@@ -1708,6 +1703,327 @@ function openLeviathanScene() {
   return windowId;
 }
 
+function startLeviathanCanvas(canvasId, windowId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext('2d');
+  let animationId = null;
+  let time = 0;
+  
+  // Mouse/light position
+  const mouse = { x: -1000, y: -1000 };
+  
+  // Track mouse within canvas
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    mouse.y = (e.clientY - rect.top) * (canvas.height / rect.height);
+  });
+  
+  canvas.addEventListener('mouseleave', () => {
+    mouse.x = -1000;
+    mouse.y = -1000;
+  });
+  
+  // Leviathan state
+  const lev = {
+    x: -400,
+    y: 0,
+    targetY: 0,
+    speed: 1.5,
+    size: 280,
+    opacity: 0,
+    active: true,
+    direction: 1
+  };
+  
+  // Small seekers that are ATTRACTED to light
+  const seekers = [];
+  for (let i = 0; i < 15; i++) {
+    seekers.push({
+      x: Math.random() * 600,
+      y: Math.random() * 400,
+      vx: 0,
+      vy: 0,
+      size: 2 + Math.random() * 3,
+      glow: 0.3 + Math.random() * 0.4
+    });
+  }
+  
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    lev.y = canvas.height * 0.5;
+    lev.targetY = lev.y + (Math.random() - 0.5) * 50;
+  }
+  resize();
+  
+  // Observe resize
+  const resizeObserver = new ResizeObserver(resize);
+  resizeObserver.observe(canvas.parentElement);
+  
+  function render() {
+    // Check if window still exists
+    if (!document.getElementById(windowId)) {
+      resizeObserver.disconnect();
+      return;
+    }
+    
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    // Clear with dark background
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, width, height);
+    
+    // Draw seekers (small bioluminescent creatures)
+    seekers.forEach(seeker => {
+      // Drift slowly
+      seeker.x += seeker.vx;
+      seeker.y += seeker.vy;
+      seeker.vx *= 0.98;
+      seeker.vy *= 0.98;
+      seeker.vx += (Math.random() - 0.5) * 0.1;
+      seeker.vy += (Math.random() - 0.5) * 0.1;
+      
+      // ATTRACTED to light (mouse)
+      if (mouse.x > 0) {
+        const toLight = { x: mouse.x - seeker.x, y: mouse.y - seeker.y };
+        const lightDist = Math.sqrt(toLight.x * toLight.x + toLight.y * toLight.y);
+        if (lightDist < 200 && lightDist > 0) {
+          const attraction = (1 - lightDist / 200) * 0.3;
+          seeker.vx += (toLight.x / lightDist) * attraction;
+          seeker.vy += (toLight.y / lightDist) * attraction;
+          seeker.glow = Math.min(1, seeker.glow + 0.02);
+        }
+      }
+      
+      // Wrap around
+      if (seeker.x < 0) seeker.x = width;
+      if (seeker.x > width) seeker.x = 0;
+      if (seeker.y < 0) seeker.y = height;
+      if (seeker.y > height) seeker.y = 0;
+      
+      // Flee from leviathan (overrides light attraction)
+      const dx = seeker.x - lev.x;
+      const dy = seeker.y - lev.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < lev.size * 1.5 && dist > 0) {
+        const force = (1 - dist / (lev.size * 1.5)) * 3;
+        seeker.vx += (dx / dist) * force;
+        seeker.vy += (dy / dist) * force;
+        seeker.glow = Math.min(1, seeker.glow + 0.1); // Light up in fear
+      }
+      seeker.glow = Math.max(0.3, seeker.glow - 0.01);
+      
+      // Draw seeker
+      const grad = ctx.createRadialGradient(seeker.x, seeker.y, 0, seeker.x, seeker.y, seeker.size * 4);
+      grad.addColorStop(0, `rgba(100, 200, 220, ${seeker.glow})`);
+      grad.addColorStop(0.5, `rgba(60, 150, 180, ${seeker.glow * 0.3})`);
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(seeker.x, seeker.y, seeker.size * 4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    
+    // LEVIATHAN
+    if (lev.active) {
+      lev.x += lev.speed * lev.direction;
+      lev.y += (lev.targetY - lev.y) * 0.01;
+      
+      // Opacity based on position
+      const distFromEdge = Math.min(lev.x + 300, width - lev.x + 400);
+      lev.opacity = Math.min(0.8, distFromEdge / 500);
+      
+      // How close is the light to the leviathan?
+      const lightToLevX = mouse.x - lev.x;
+      const lightToLevY = mouse.y - lev.y;
+      const lightToLevDist = Math.sqrt(lightToLevX * lightToLevX + lightToLevY * lightToLevY);
+      const illumination = mouse.x > 0 ? Math.max(0, 1 - lightToLevDist / (lev.size * 1.5)) : 0;
+      
+      ctx.save();
+      
+      // Darker area around leviathan
+      const blockRadius = lev.size * 1.8;
+      const blockGrad = ctx.createRadialGradient(lev.x, lev.y, lev.size * 0.5, lev.x, lev.y, blockRadius);
+      blockGrad.addColorStop(0, `rgba(0, 0, 0, ${lev.opacity * 0.8})`);
+      blockGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = blockGrad;
+      ctx.beginPath();
+      ctx.arc(lev.x, lev.y, blockRadius, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Main body - reveals color when illuminated
+      ctx.globalAlpha = lev.opacity;
+      const bodyColor = illumination > 0.1 
+        ? `rgb(${15 + illumination * 25}, ${12 + illumination * 18}, ${20 + illumination * 25})`
+        : '#050308';
+      ctx.fillStyle = bodyColor;
+      ctx.beginPath();
+      ctx.ellipse(lev.x, lev.y, lev.size, lev.size * 0.35, 0, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // REVEALED BY LIGHT: Surface texture / scarring
+      if (illumination > 0.2) {
+        ctx.globalAlpha = lev.opacity * illumination * 0.6;
+        for (let i = 0; i < 8; i++) {
+          const ridgeX = lev.x - lev.size * 0.6 + i * lev.size * 0.18;
+          const ridgeY = lev.y;
+          ctx.strokeStyle = `rgba(60, 50, 70, ${illumination})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.ellipse(ridgeX, ridgeY, 8, lev.size * 0.28, 0, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = lev.opacity;
+      }
+      
+      // Trailing tail
+      ctx.fillStyle = bodyColor;
+      ctx.beginPath();
+      ctx.moveTo(lev.x - lev.direction * lev.size, lev.y);
+      ctx.quadraticCurveTo(
+        lev.x - lev.direction * lev.size * 1.5, lev.y + Math.sin(time * 0.003) * 30,
+        lev.x - lev.direction * lev.size * 2.2, lev.y + Math.sin(time * 0.002) * 50
+      );
+      ctx.quadraticCurveTo(
+        lev.x - lev.direction * lev.size * 1.5, lev.y - Math.sin(time * 0.003) * 20,
+        lev.x - lev.direction * lev.size, lev.y
+      );
+      ctx.fill();
+      
+      // Eye - REACTS to illumination
+      const eyeX = lev.x + lev.direction * lev.size * 0.5;
+      const eyeY = lev.y - lev.size * 0.08;
+      const eyeIllumination = mouse.x > 0 ? Math.max(0, 1 - Math.sqrt(Math.pow(mouse.x - eyeX, 2) + Math.pow(mouse.y - eyeY, 2)) / 200) : 0;
+      
+      // Eye gets bigger and brighter when you shine light on it
+      const eyeSize = 8 + eyeIllumination * 6;
+      const eyeGlowSize = 30 + eyeIllumination * 30;
+      
+      // Eye glow - intensifies with light
+      const eyeGlow = ctx.createRadialGradient(eyeX, eyeY, 0, eyeX, eyeY, eyeGlowSize);
+      eyeGlow.addColorStop(0, `rgba(${180 + eyeIllumination * 75}, ${60 + eyeIllumination * 40}, ${60 + eyeIllumination * 20}, ${lev.opacity * (0.8 + eyeIllumination * 0.2)})`);
+      eyeGlow.addColorStop(0.5, `rgba(${120 + eyeIllumination * 60}, 40, 40, ${lev.opacity * (0.3 + eyeIllumination * 0.3)})`);
+      eyeGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = eyeGlow;
+      ctx.beginPath();
+      ctx.arc(eyeX, eyeY, eyeGlowSize, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Eye core - pulses when illuminated
+      const eyePulse = eyeIllumination > 0.3 ? Math.sin(time * 0.01) * 0.2 : 0;
+      ctx.fillStyle = `rgba(${200 + eyeIllumination * 55}, ${80 + eyeIllumination * 80}, ${60 + eyeIllumination * 40}, ${lev.opacity})`;
+      ctx.beginPath();
+      ctx.arc(eyeX, eyeY, eyeSize * (1 + eyePulse), 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Pupil - tracks the light, contracts to slit when illuminated
+      const toPlayerDist = Math.sqrt(Math.pow(mouse.x - eyeX, 2) + Math.pow(mouse.y - eyeY, 2)) || 1;
+      const pupilOffsetX = mouse.x > 0 ? ((mouse.x - eyeX) / toPlayerDist) * 3 : 0;
+      const pupilOffsetY = mouse.x > 0 ? ((mouse.y - eyeY) / toPlayerDist) * 3 : 0;
+      
+      ctx.fillStyle = `rgba(10, 0, 0, ${lev.opacity})`;
+      ctx.beginPath();
+      if (eyeIllumination > 0.4) {
+        // Slit pupil when illuminated
+        ctx.ellipse(eyeX + pupilOffsetX, eyeY + pupilOffsetY, 2, eyeSize * 0.7, 0, 0, Math.PI * 2);
+      } else {
+        // Round pupil in darkness
+        ctx.arc(eyeX + pupilOffsetX, eyeY + pupilOffsetY, 4 - eyeIllumination * 2, 0, Math.PI * 2);
+      }
+      ctx.fill();
+      
+      // REVEALED BY LIGHT: Second eye
+      if (illumination > 0.4) {
+        const eye2X = lev.x + lev.direction * lev.size * 0.3;
+        const eye2Y = lev.y + lev.size * 0.12;
+        const eye2Vis = (illumination - 0.4) * 1.6;
+        
+        const eye2Glow = ctx.createRadialGradient(eye2X, eye2Y, 0, eye2X, eye2Y, 20);
+        eye2Glow.addColorStop(0, `rgba(180, 60, 60, ${lev.opacity * eye2Vis * 0.6})`);
+        eye2Glow.addColorStop(1, 'transparent');
+        ctx.fillStyle = eye2Glow;
+        ctx.beginPath();
+        ctx.arc(eye2X, eye2Y, 20, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = `rgba(200, 80, 60, ${lev.opacity * eye2Vis})`;
+        ctx.beginPath();
+        ctx.arc(eye2X, eye2Y, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      // Bioluminescent spots along body
+      const baseSpotCount = 6;
+      const bonusSpots = Math.floor(illumination * 8);
+      for (let i = 0; i < baseSpotCount + bonusSpots; i++) {
+        const isBonus = i >= baseSpotCount;
+        const spotX = lev.x - lev.direction * (lev.size * 0.3 + (i % 8) * lev.size * 0.25);
+        const spotY = lev.y + Math.sin(i * 1.5 + time * 0.002) * (lev.size * 0.15) + (isBonus ? (i % 2 ? -1 : 1) * lev.size * 0.2 : 0);
+        const spotSize = 4 + Math.sin(time * 0.005 + i) * 2;
+        const spotAlpha = isBonus ? illumination * 0.8 : 1;
+        
+        const spotGrad = ctx.createRadialGradient(spotX, spotY, 0, spotX, spotY, spotSize * 3);
+        spotGrad.addColorStop(0, `rgba(80, 180, 200, ${lev.opacity * 0.6 * spotAlpha})`);
+        spotGrad.addColorStop(0.5, `rgba(60, 140, 160, ${lev.opacity * 0.2 * spotAlpha})`);
+        spotGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = spotGrad;
+        ctx.beginPath();
+        ctx.arc(spotX, spotY, spotSize * 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      ctx.restore();
+      
+      // Reset when offscreen and loop
+      if (lev.x > width + lev.size * 2.5) {
+        lev.x = -lev.size * 2;
+        lev.y = height * 0.3 + Math.random() * height * 0.4;
+        lev.targetY = lev.y + (Math.random() - 0.5) * 80;
+        lev.speed = 1.2 + Math.random() * 1;
+      }
+    }
+    
+    // LIGHT SOURCE (cursor) - draw last so it's on top
+    if (mouse.x > 0) {
+      const lightRadius = 120;
+      const lightGrad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, lightRadius);
+      lightGrad.addColorStop(0, 'rgba(200, 220, 255, 0.15)');
+      lightGrad.addColorStop(0.3, 'rgba(150, 180, 220, 0.08)');
+      lightGrad.addColorStop(0.6, 'rgba(100, 140, 180, 0.03)');
+      lightGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = lightGrad;
+      ctx.beginPath();
+      ctx.arc(mouse.x, mouse.y, lightRadius, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Small bright core
+      const coreGrad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 8);
+      coreGrad.addColorStop(0, 'rgba(220, 240, 255, 0.4)');
+      coreGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = coreGrad;
+      ctx.beginPath();
+      ctx.arc(mouse.x, mouse.y, 8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    // Vignette
+    const vignette = ctx.createRadialGradient(width / 2, height / 2, height * 0.2, width / 2, height / 2, height);
+    vignette.addColorStop(0, 'transparent');
+    vignette.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, width, height);
+    
+    time += 16;
+    animationId = requestAnimationFrame(render);
+  }
+  
+  render();
+}
 
 // ============================================
 // ROV EXTERIOR - External view of the submersible
@@ -1715,7 +2031,7 @@ function openLeviathanScene() {
 
 function openROVExteriorScene() {
   const windowId = generateId('window');
-
+  
   const windowEl = document.createElement('div');
   windowEl.className = 'window video-window opening';
   windowEl.id = windowId;
@@ -1723,7 +2039,7 @@ function openROVExteriorScene() {
   windowEl.style.top = `${randomInt(50, 150)}px`;
   windowEl.style.width = '600px';
   windowEl.style.height = '450px';
-
+  
   windowEl.innerHTML = `
     <div class="window-header">
       <div class="window-controls">
@@ -1742,31 +2058,343 @@ function openROVExteriorScene() {
       <div style="position: absolute; bottom: 12px; right: 12px; font-size: 9px; color: rgba(77, 208, 225, 0.5);">03:21:44</div>
     </div>
   `;
-
+  
   document.getElementById('windows-container').appendChild(windowEl);
   state.openWindows.push(windowId);
-
+  
   const header = windowEl.querySelector('.window-header');
   makeDraggable(windowEl, header);
   header.style.cursor = 'grab';
   makeResizable(windowEl);
-
-  setTimeout(async () => {
-    const canvas = document.getElementById(`rov-ext-canvas-${windowId}`);
-    const ROVExteriorScene = window.VisualToolkit?.scenes?.deepSea?.rovExterior;
-
-    if (ROVExteriorScene) {
-      await ROVExteriorScene.init(canvas, { intensity: 0.7, duration: Infinity });
-      activeScenes.set(windowId, ROVExteriorScene);
-    }
+  
+  setTimeout(() => {
+    startROVExteriorCanvas(`rov-ext-canvas-${windowId}`, windowId);
   }, 100);
-
+  
   if (sfx) sfx.play('sonarPing');
   addJournalEntry("External camera feed: Monitoring ROV Nereid descent.");
-
+  
   return windowId;
 }
 
+function startROVExteriorCanvas(canvasId, windowId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext('2d');
+  let time = 0;
+  
+  // === VISUAL TOOLKIT CONSTANTS ===
+  // Timing multipliers (slower = more premium)
+  const timing = {
+    glacial: 0.0008,   // ROV rotation
+    verySlow: 0.001,   // drift
+    slow: 0.002,       // light pulse
+  };
+  
+  // Color palettes from toolkit
+  const deepSea = {
+    surface: '#020810',
+    mid: '#051018',
+    deep: '#020a12',
+    abyss: '#010508',
+  };
+  
+  const materials = {
+    rovYellow: { highlight: '#e8a832', mid: '#d4942a', shadow: '#b87820', outline: '#8a5a15' },
+    flotation: { fill: '#ff6b35', outline: '#cc4420' },
+    metal: { light: '#666', mid: '#444', dark: '#333', darkest: '#222' },
+    lens: { body: '#1a1a2e', glint: 'rgba(100, 150, 200, 0.5)' },
+    panel: { line: 'rgba(100, 60, 20, 0.5)' },
+  };
+  
+  // Marine snow particles (varied sizes, speeds, alphas - uniformity looks artificial)
+  const particles = [];
+  for (let i = 0; i < 80; i++) {
+    particles.push({
+      x: Math.random(),
+      y: Math.random(),
+      size: Math.random() * 2 + 0.5,      // 0.5 - 2.5px varied
+      speed: Math.random() * 0.008 + 0.003,
+      alpha: Math.random() * 0.5 + 0.2,   // 0.2 - 0.7 varied
+    });
+  }
+  
+  // ROV state
+  const rov = { x: 0.5, y: 0.45 };
+  
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * window.devicePixelRatio;
+    canvas.height = rect.height * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  }
+  resize();
+  
+  const resizeObserver = new ResizeObserver(resize);
+  resizeObserver.observe(canvas);
+  
+  function isWindowOpen() {
+    return document.getElementById(windowId) !== null;
+  }
+  
+  // === TOOLKIT HELPER: Organic drift (two sine waves combined) ===
+  function drift(t) {
+    return {
+      x: Math.sin(t * timing.verySlow) * 0.02 + Math.sin(t * timing.slow) * 0.01,
+      y: Math.cos(t * timing.verySlow * 1.1) * 0.02 + Math.cos(t * timing.slow * 0.9) * 0.006,
+      rotation: Math.sin(t * timing.glacial) * 0.03,
+    };
+  }
+  
+  // === TOOLKIT HELPER: 3D material gradient ===
+  function material3D(x, y, width, height, colors) {
+    const grad = ctx.createLinearGradient(x, y, x, y + height);
+    grad.addColorStop(0, colors.highlight);
+    grad.addColorStop(0.5, colors.mid);
+    grad.addColorStop(1, colors.shadow);
+    return grad;
+  }
+  
+  // === TOOLKIT HELPER: Offset shadow for depth ===
+  function drawWithShadow(offsetX, offsetY, drawFn) {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.save();
+    ctx.translate(offsetX, offsetY);
+    drawFn();
+    ctx.restore();
+  }
+  
+  // === TOOLKIT HELPER: Panel lines ===
+  function drawPanelLines(x, y, width, height, positions) {
+    ctx.strokeStyle = materials.panel.line;
+    ctx.lineWidth = 1;
+    for (const pos of positions) {
+      const lineX = x + width * pos;
+      ctx.beginPath();
+      ctx.moveTo(lineX, y);
+      ctx.lineTo(lineX, y + height);
+      ctx.stroke();
+    }
+  }
+  
+  // === TOOLKIT HELPER: Grille pattern ===
+  function drawGrille(x, y, width, height, lineCount) {
+    ctx.strokeStyle = materials.metal.light;
+    ctx.lineWidth = 2;
+    const spacing = height / (lineCount + 1);
+    for (let i = 1; i <= lineCount; i++) {
+      const lineY = y + spacing * i;
+      ctx.beginPath();
+      ctx.moveTo(x, lineY);
+      ctx.lineTo(x + width, lineY);
+      ctx.stroke();
+    }
+  }
+  
+  // === TOOLKIT HELPER: Lens with glint ===
+  function drawLens(x, y, outerR, innerR) {
+    ctx.fillStyle = materials.metal.darkest;
+    ctx.beginPath();
+    ctx.arc(x, y, outerR, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = materials.lens.body;
+    ctx.beginPath();
+    ctx.arc(x, y, innerR, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = materials.lens.glint;
+    ctx.beginPath();
+    ctx.arc(x - 2, y - 2, innerR * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // === TOOLKIT HELPER: Light with glow ===
+  function drawLight(x, y, radius, isOn) {
+    ctx.fillStyle = materials.metal.mid;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    if (isOn) {
+      const intensity = 0.8 + Math.sin(time * timing.slow) * 0.1;
+      
+      // Multi-layer glow (toolkit principle: single glow looks flat)
+      const glow = ctx.createRadialGradient(x, y, 0, x, y, radius * 8);
+      glow.addColorStop(0, `rgba(255, 250, 230, ${intensity})`);
+      glow.addColorStop(0.2, `rgba(255, 240, 200, ${intensity * 0.5})`);
+      glow.addColorStop(1, 'rgba(255, 240, 200, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(x, y, radius * 8, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.fillStyle = `rgba(255, 255, 240, ${intensity})`;
+      ctx.beginPath();
+      ctx.arc(x, y, radius * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  
+  // === TOOLKIT HELPER: Tether with wobble ===
+  function drawTether(startX, startY, endY, wobbleAmt) {
+    ctx.strokeStyle = 'rgba(80, 80, 80, 0.6)';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([8, 4]);
+    const midX = startX + Math.sin(time * timing.slow) * wobbleAmt;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(midX, endY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  
+  function drawROV(x, y, scale) {
+    ctx.save();
+    ctx.translate(x, y);
+    
+    const d = drift(time);
+    ctx.rotate(d.rotation);
+    ctx.scale(scale, scale);
+    
+    const bodyW = 80;
+    const bodyH = 50;
+    
+    // Shadow first (toolkit: offset shadows create depth)
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.fillRect(-bodyW/2 + 4, -bodyH/2 + 4, bodyW, bodyH);
+    
+    // Main body with 3D gradient
+    ctx.fillStyle = material3D(-bodyW/2, -bodyH/2, bodyW, bodyH, materials.rovYellow);
+    ctx.fillRect(-bodyW/2, -bodyH/2, bodyW, bodyH);
+    
+    // Outline
+    ctx.strokeStyle = materials.rovYellow.outline;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-bodyW/2, -bodyH/2, bodyW, bodyH);
+    
+    // Panel lines
+    drawPanelLines(-bodyW/2, -bodyH/2, bodyW, bodyH, [0.25, 0.75]);
+    
+    // Flotation foam (top)
+    ctx.fillStyle = materials.flotation.fill;
+    ctx.fillRect(-bodyW/2 + 5, -bodyH/2 - 15, bodyW - 10, 15);
+    ctx.strokeStyle = materials.flotation.outline;
+    ctx.strokeRect(-bodyW/2 + 5, -bodyH/2 - 15, bodyW - 10, 15);
+    
+    // Thrusters
+    ctx.fillStyle = materials.metal.dark;
+    ctx.fillRect(-bodyW/2 - 15, -10, 15, 20);
+    ctx.fillRect(bodyW/2, -10, 15, 20);
+    
+    // Thruster grilles
+    drawGrille(-bodyW/2 - 15, -10, 15, 20, 4);
+    drawGrille(bodyW/2, -10, 15, 20, 4);
+    
+    // Camera lens
+    drawLens(0, bodyH/2 + 10, 12, 8);
+    
+    // Lights
+    drawLight(-25, bodyH/2 + 5, 8, true);
+    drawLight(25, bodyH/2 + 5, 8, true);
+    
+    // Manipulator arm
+    ctx.strokeStyle = materials.metal.light;
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-bodyW/2 + 10, bodyH/2);
+    ctx.lineTo(-bodyW/2 + 5, bodyH/2 + 20);
+    ctx.lineTo(-bodyW/2 + 15, bodyH/2 + 25);
+    ctx.stroke();
+    
+    // Tether
+    drawTether(0, -bodyH/2 - 15, -bodyH/2 - 100, 10);
+    
+    ctx.restore();
+  }
+  
+  function render() {
+    if (!isWindowOpen()) {
+      resizeObserver.disconnect();
+      return;
+    }
+    
+    const w = canvas.width / window.devicePixelRatio;
+    const h = canvas.height / window.devicePixelRatio;
+    
+    // Deep water background (toolkit: 4-stop gradient for depth)
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+    bgGrad.addColorStop(0, deepSea.surface);
+    bgGrad.addColorStop(0.3, deepSea.mid);
+    bgGrad.addColorStop(0.6, deepSea.deep);
+    bgGrad.addColorStop(1, deepSea.abyss);
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+    
+    // Subtle caustics (very faint light from above)
+    for (let i = 0; i < 3; i++) {
+      const cx = (Math.sin(time * timing.glacial + i) * 0.3 + 0.5) * w;
+      const cGrad = ctx.createRadialGradient(cx, h * 0.1, 0, cx, h * 0.1, 150);
+      cGrad.addColorStop(0, 'rgba(100, 150, 200, 0.03)');
+      cGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = cGrad;
+      ctx.fillRect(0, 0, w, h * 0.4);
+    }
+    
+    // Marine snow (toolkit: varied properties prevent artificial look)
+    for (const p of particles) {
+      p.y -= p.speed;
+      if (p.y < -0.05) {
+        p.y = 1.05;
+        p.x = Math.random();
+      }
+      ctx.beginPath();
+      ctx.arc(p.x * w, p.y * h, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(180, 200, 220, ${p.alpha})`;
+      ctx.fill();
+    }
+    
+    // ROV with organic drift
+    const d = drift(time);
+    const rovX = (rov.x + d.x) * w;
+    const rovY = (rov.y + d.y) * h;
+    drawROV(rovX, rovY, 1.2);
+    
+    // Light beams into darkness
+    ctx.save();
+    ctx.translate(rovX, rovY);
+    ctx.rotate(d.rotation);
+    
+    const beamGrad = ctx.createLinearGradient(0, 50, 0, h * 0.6);
+    beamGrad.addColorStop(0, 'rgba(255, 250, 230, 0.15)');
+    beamGrad.addColorStop(0.5, 'rgba(200, 220, 255, 0.05)');
+    beamGrad.addColorStop(1, 'transparent');
+    
+    ctx.fillStyle = beamGrad;
+    ctx.beginPath();
+    ctx.moveTo(-35, 50);
+    ctx.lineTo(-80, h * 0.5);
+    ctx.lineTo(80, h * 0.5);
+    ctx.lineTo(35, 50);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    
+    // Vignette (toolkit: darkens edges, focuses center)
+    const vignette = ctx.createRadialGradient(w/2, h/2, h * 0.3, w/2, h/2, h * 0.8);
+    vignette.addColorStop(0, 'transparent');
+    vignette.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, w, h);
+    
+    time += 16;
+    requestAnimationFrame(render);
+  }
+  
+  render();
+}
 
 // ============================================
 // THE WALL - Massive surface with tracking eyes
@@ -1774,7 +2402,7 @@ function openROVExteriorScene() {
 
 function openWallScene() {
   const windowId = generateId('window');
-  
+
   const windowEl = document.createElement('div');
   windowEl.className = 'window video-window opening';
   windowEl.id = windowId;
@@ -1782,7 +2410,7 @@ function openWallScene() {
   windowEl.style.top = `${randomInt(50, 150)}px`;
   windowEl.style.width = '600px';
   windowEl.style.height = '450px';
-  
+
   windowEl.innerHTML = `
     <div class="window-header">
       <div class="window-controls">
@@ -1801,23 +2429,33 @@ function openWallScene() {
       <div style="position: absolute; bottom: 12px; right: 12px; font-size: 9px; color: rgba(77, 208, 225, 0.5);">02:41:33</div>
     </div>
   `;
-  
+
   document.getElementById('windows-container').appendChild(windowEl);
   state.openWindows.push(windowId);
-  
+
   const header = windowEl.querySelector('.window-header');
   makeDraggable(windowEl, header);
   header.style.cursor = 'grab';
   makeResizable(windowEl);
-  
+
   setTimeout(async () => {
     const canvas = document.getElementById(`wall-canvas-${windowId}`);
-    const WallScene = window.VisualToolkit?.scenes?.deepSea?.wall;
+    if (!canvas) return;
 
-    if (WallScene) {
-      await WallScene.init(canvas, { intensity: 0.8, duration: Infinity });
-      activeScenes.set(windowId, WallScene);
+    const WallScene = window.VisualToolkit?.scenes?.deepSea?.wall;
+    if (!WallScene) {
+      console.error('[Scene] Wall scene not available from VisualToolkit');
+      return;
     }
+
+    try {
+      await WallScene.init(canvas, { intensity: 0.8, duration: Infinity });
+    } catch (err) {
+      console.error('[openWallScene] WallScene.init() failed:', err);
+      return;
+    }
+
+    activeScenes.set(windowId, WallScene);
   }, 100);
   
   if (ambience) {
@@ -1832,12 +2470,13 @@ function openWallScene() {
   return windowId;
 }
 
+// startWallCanvas() function removed - now using VisualToolkit WallScene
 
 // ============================================
 // SEEKERS - Bioluminescent swarm reacting to light
 // ============================================
 
-async function openSeekersScene() {
+function openSeekersScene() {
   const windowId = generateId('window');
 
   const windowEl = document.createElement('div');
@@ -1875,22 +2514,33 @@ async function openSeekersScene() {
   header.style.cursor = 'grab';
   makeResizable(windowEl);
 
-  // Initialize visual-toolkit Seekers scene
   setTimeout(async () => {
     const canvas = document.getElementById(`seekers-canvas-${windowId}`);
     if (!canvas) return;
 
-    // Access scene from VisualToolkit global bundle
+    console.log('[openSeekersScene] window.VisualToolkit:', !!window.VisualToolkit);
+    console.log('[openSeekersScene] window.VisualToolkit.scenes:', !!window.VisualToolkit?.scenes);
+    console.log('[openSeekersScene] window.VisualToolkit.scenes.deepSea:', !!window.VisualToolkit?.scenes?.deepSea);
+    if (window.VisualToolkit?.scenes?.deepSea) {
+      console.log('[openSeekersScene] deepSea keys:', Object.keys(window.VisualToolkit.scenes.deepSea));
+    }
+
     const SeekersScene = window.VisualToolkit?.scenes?.deepSea?.seekers;
+    console.log('[openSeekersScene] SeekersScene found:', !!SeekersScene);
     if (!SeekersScene) {
       console.error('[Scene] Seekers scene not available from VisualToolkit');
       return;
     }
 
-    // Initialize scene
-    await SeekersScene.init(canvas, { intensity: 0.7, duration: Infinity });
+    try {
+      console.log('[openSeekersScene] Calling SeekersScene.init()');
+      await SeekersScene.init(canvas, { intensity: 1 });
+      console.log('[openSeekersScene] SeekersScene.init() completed');
+    } catch (err) {
+      console.error('[openSeekersScene] SeekersScene.init() failed:', err);
+      return;
+    }
 
-    // Store scene for cleanup
     activeScenes.set(windowId, SeekersScene);
   }, 100);
 
@@ -1902,6 +2552,8 @@ async function openSeekersScene() {
 
   return windowId;
 }
+
+// startSeekersCanvas() function removed - now using VisualToolkit SeekersScene
 
 // ============================================
 // TENDRIL - Single organic tendril reaching toward light
@@ -1977,9 +2629,9 @@ async function openShadowsScene() {
 // GIANT SQUID - Tentacles from the darkness
 // ============================================
 
-async function openGiantSquidScene() {
+function openGiantSquidScene() {
   const windowId = generateId('window');
-
+  
   const windowEl = document.createElement('div');
   windowEl.className = 'window video-window opening';
   windowEl.id = windowId;
@@ -1987,7 +2639,7 @@ async function openGiantSquidScene() {
   windowEl.style.top = `${randomInt(50, 150)}px`;
   windowEl.style.width = '600px';
   windowEl.style.height = '450px';
-
+  
   windowEl.innerHTML = `
     <div class="window-header">
       <div class="window-controls">
@@ -2005,34 +2657,19 @@ async function openGiantSquidScene() {
       <div style="position: absolute; bottom: 12px; right: 12px; font-size: 9px; color: rgba(77, 208, 225, 0.5);">01:47:33</div>
     </div>
   `;
-
+  
   document.getElementById('windows-container').appendChild(windowEl);
   state.openWindows.push(windowId);
-
+  
   const header = windowEl.querySelector('.window-header');
   makeDraggable(windowEl, header);
   header.style.cursor = 'grab';
   makeResizable(windowEl);
-
-  // Initialize visual-toolkit Giant Squid scene
-  setTimeout(async () => {
-    const canvas = document.getElementById(`squid-canvas-${windowId}`);
-    if (!canvas) return;
-
-    // Access scene from VisualToolkit global bundle
-    const GiantSquidScene = window.VisualToolkit?.scenes?.deepSea?.giantSquid;
-    if (!GiantSquidScene) {
-      console.error('[Scene] Giant Squid scene not available from VisualToolkit');
-      return;
-    }
-
-    // Initialize scene
-    await GiantSquidScene.init(canvas, { intensity: 0.8, duration: Infinity });
-
-    // Store scene for cleanup
-    activeScenes.set(windowId, GiantSquidScene);
+  
+  setTimeout(() => {
+    startGiantSquidCanvas(`squid-canvas-${windowId}`, windowId);
   }, 100);
-
+  
   // Audio for squid encounter
   if (ambience) {
     ambience.addLayer('tension', { intensity: 0.25, fadeIn: 2 });
@@ -2041,10 +2678,283 @@ async function openGiantSquidScene() {
     sfx.play('discovery');
     setTimeout(() => sfx.play('creature'), 3000);
   }
-
+  
   addJournalEntry("Dive 4912: Massive cephalopod passing. Estimate 12+ meters. Architeuthis?");
-
+  
   return windowId;
+}
+
+function startGiantSquidCanvas(canvasId, windowId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext('2d');
+  let animationId = null;
+  let time = 0;
+  
+  // Mouse/light position
+  const mouse = { x: -1000, y: -1000 };
+  
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    mouse.y = (e.clientY - rect.top) * (canvas.height / rect.height);
+  });
+  
+  canvas.addEventListener('mouseleave', () => {
+    mouse.x = -1000;
+    mouse.y = -1000;
+  });
+  
+  // Particles floating in water
+  const particles = [];
+  for (let i = 0; i < 40; i++) {
+    particles.push({
+      x: Math.random(),
+      y: Math.random(),
+      size: Math.random() * 2 + 0.5,
+      speed: Math.random() * 0.0003 + 0.0001,
+      drift: Math.random() * 0.0002 - 0.0001,
+      alpha: Math.random() * 0.3 + 0.1
+    });
+  }
+  
+  // ONE massive tentacle that drags across the screen
+  const tentacle = {
+    // Control points for a bezier-like path
+    progress: 0,        // 0 to 1, how far across the screen
+    yCenter: 0.5,       // Vertical center position
+    thickness: 120,     // HUGE
+    phase: 0
+  };
+  
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * window.devicePixelRatio;
+    canvas.height = rect.height * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  }
+  resize();
+  
+  const resizeObserver = new ResizeObserver(resize);
+  resizeObserver.observe(canvas);
+  
+  function isWindowOpen() {
+    return document.getElementById(windowId) !== null;
+  }
+  
+  function drawMassiveTentacle() {
+    const w = canvas.width / window.devicePixelRatio;
+    const h = canvas.height / window.devicePixelRatio;
+    
+    // Tentacle moves from left to right across frame
+    const headX = -w * 0.3 + tentacle.progress * w * 1.6;
+    const wave = time * 0.0008;
+    
+    // Build the tentacle as a series of segments
+    const segments = 50;
+    const points = [];
+    
+    for (let i = 0; i <= segments; i++) {
+      const ratio = i / segments;
+      
+      // X position trails behind the "head"
+      const segmentX = headX - ratio * w * 0.8;
+      
+      // Y position with organic wave motion
+      const baseY = h * tentacle.yCenter;
+      const waveY = Math.sin(wave + ratio * 3) * h * 0.15;
+      const slowWave = Math.sin(wave * 0.3 + ratio * 1.5) * h * 0.08;
+      const segmentY = baseY + waveY + slowWave;
+      
+      // Thickness tapers toward the tip (which is offscreen left)
+      const segmentThickness = tentacle.thickness * (1 - ratio * 0.6);
+      
+      points.push({ x: segmentX, y: segmentY, thickness: segmentThickness });
+    }
+    
+    // Draw the tentacle body (thick fleshy arm)
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    for (let i = 1; i < points.length; i++) {
+      const p0 = points[i - 1];
+      const p1 = points[i];
+      
+      // Skip if completely off screen
+      if (p0.x < -100 && p1.x < -100) continue;
+      if (p0.x > w + 100 && p1.x > w + 100) continue;
+      
+      // Color gradient - deep red/maroon flesh
+      const ratio = i / points.length;
+      const r = 70 + ratio * 30;
+      const g = 20 + ratio * 15;
+      const b = 35 + ratio * 15;
+      
+      ctx.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+      ctx.lineWidth = (p0.thickness + p1.thickness) / 2;
+      
+      ctx.beginPath();
+      ctx.moveTo(p0.x, p0.y);
+      ctx.lineTo(p1.x, p1.y);
+      ctx.stroke();
+    }
+    
+    // Draw suction cups along the underside
+    for (let i = 2; i < points.length - 2; i += 3) {
+      const p = points[i];
+      
+      // Skip if off screen
+      if (p.x < -50 || p.x > w + 50) continue;
+      
+      const cupSize = p.thickness * 0.25;
+      
+      // Get angle of tentacle at this point
+      const dx = points[i + 1].x - points[i - 1].x;
+      const dy = points[i + 1].y - points[i - 1].y;
+      const angle = Math.atan2(dy, dx) + Math.PI / 2;
+      
+      // Place cup on the "underside"
+      const cupX = p.x + Math.cos(angle) * p.thickness * 0.35;
+      const cupY = p.y + Math.sin(angle) * p.thickness * 0.35;
+      
+      // Outer ring (rim of sucker)
+      ctx.beginPath();
+      ctx.arc(cupX, cupY, cupSize, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(50, 15, 25, 0.9)';
+      ctx.fill();
+      
+      // Inner dark center
+      ctx.beginPath();
+      ctx.arc(cupX, cupY, cupSize * 0.5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(20, 5, 10, 0.95)';
+      ctx.fill();
+      
+      // Highlight ring
+      ctx.beginPath();
+      ctx.arc(cupX, cupY, cupSize * 0.8, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(100, 40, 50, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    
+    // Bioluminescent chromatophores - sparse, pulsing
+    for (let i = 5; i < points.length - 5; i += 8) {
+      const p = points[i];
+      if (p.x < 0 || p.x > w) continue;
+      
+      const pulsePhase = time * 0.002 + i * 0.3;
+      const pulse = Math.sin(pulsePhase) * 0.5 + 0.5;
+      const spotSize = 4 + pulse * 3;
+      const alpha = 0.3 + pulse * 0.4;
+      
+      // Main spot
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, spotSize, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(80, 180, 220, ${alpha})`;
+      ctx.fill();
+      
+      // Glow
+      const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, spotSize * 4);
+      glow.addColorStop(0, `rgba(80, 180, 220, ${alpha * 0.4})`);
+      glow.addColorStop(1, 'rgba(80, 180, 220, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, spotSize * 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    // Texture/detail lines along the flesh
+    ctx.strokeStyle = 'rgba(40, 10, 20, 0.3)';
+    ctx.lineWidth = 1;
+    for (let i = 4; i < points.length - 4; i += 6) {
+      const p = points[i];
+      if (p.x < 0 || p.x > w) continue;
+      
+      const dx = points[i + 1].x - points[i - 1].x;
+      const dy = points[i + 1].y - points[i - 1].y;
+      const angle = Math.atan2(dy, dx) + Math.PI / 2;
+      
+      ctx.beginPath();
+      ctx.moveTo(
+        p.x + Math.cos(angle) * p.thickness * 0.4,
+        p.y + Math.sin(angle) * p.thickness * 0.4
+      );
+      ctx.lineTo(
+        p.x - Math.cos(angle) * p.thickness * 0.4,
+        p.y - Math.sin(angle) * p.thickness * 0.4
+      );
+      ctx.stroke();
+    }
+  }
+  
+  function render() {
+    if (!isWindowOpen()) {
+      resizeObserver.disconnect();
+      return;
+    }
+    
+    const w = canvas.width / window.devicePixelRatio;
+    const h = canvas.height / window.devicePixelRatio;
+    
+    // Dark abyss background
+    ctx.fillStyle = '#020306';
+    ctx.fillRect(0, 0, w, h);
+    
+    // Subtle blue depth gradient
+    const depthGrad = ctx.createLinearGradient(0, 0, 0, h);
+    depthGrad.addColorStop(0, 'rgba(5, 15, 30, 0.4)');
+    depthGrad.addColorStop(1, 'rgba(0, 5, 15, 0.2)');
+    ctx.fillStyle = depthGrad;
+    ctx.fillRect(0, 0, w, h);
+    
+    // Draw particles (marine snow)
+    for (const p of particles) {
+      p.y -= p.speed;
+      p.x += p.drift;
+      if (p.y < -0.05) {
+        p.y = 1.05;
+        p.x = Math.random();
+      }
+      
+      ctx.beginPath();
+      ctx.arc(p.x * w, p.y * h, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(150, 180, 200, ${p.alpha})`;
+      ctx.fill();
+    }
+    
+    // ROV light follows mouse
+    if (mouse.x > 0 && mouse.x < w) {
+      const lightGrad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 180);
+      lightGrad.addColorStop(0, 'rgba(200, 220, 255, 0.12)');
+      lightGrad.addColorStop(0.5, 'rgba(150, 180, 220, 0.04)');
+      lightGrad.addColorStop(1, 'rgba(100, 150, 200, 0)');
+      ctx.fillStyle = lightGrad;
+      ctx.beginPath();
+      ctx.arc(mouse.x, mouse.y, 180, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    // Animate tentacle progress (slowly drags across)
+    if (time > 1000) {
+      tentacle.progress = Math.min((time - 1000) / 12000, 1.2);
+    }
+    
+    // Draw the massive tentacle
+    drawMassiveTentacle();
+    
+    // Heavy vignette for depth
+    const vignette = ctx.createRadialGradient(w / 2, h / 2, h * 0.2, w / 2, h / 2, h * 0.9);
+    vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    vignette.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, w, h);
+    
+    time += 16;
+    animationId = requestAnimationFrame(render);
+  }
+  
+  render();
 }
 
 // ============================================
@@ -2373,6 +3283,14 @@ function runChaosEvent() {
 // ============================================
 
 function init() {
+  console.log('[init] Page initialized');
+  console.log('[init] VisualToolkit available?', !!window.VisualToolkit);
+  if (window.VisualToolkit) {
+    console.log('[init] VisualToolkit.scenes:', !!window.VisualToolkit.scenes);
+    console.log('[init] VisualToolkit.scenes.deepSea:', !!window.VisualToolkit.scenes?.deepSea);
+    console.log('[init] deepSea.wall:', !!window.VisualToolkit.scenes?.deepSea?.wall);
+  }
+
   // Set greeting
   setGreeting();
   

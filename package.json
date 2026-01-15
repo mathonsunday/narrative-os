@@ -27,6 +27,6 @@
   },
   "dependencies": {
     "music-playground": "^2.3.0",
-    "visual-toolkit": "^2.1.5"
+    "visual-toolkit": "^2.2.0"
   }
 }
