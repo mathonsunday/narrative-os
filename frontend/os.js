@@ -325,12 +325,15 @@ function sendToBackend(type, data = {}) {
 }
 
 // ============================================
-// CHARACTER DATA
+// THEME DATA
+// Use theme config if available, otherwise use defaults for backwards compatibility
 // ============================================
 
-const CHARACTER_NAMES = ["Dr. Petrovic", "Mira", "Mira Petrovic"];
+const theme = window.DeepSeaTheme || {};
 
-const GREETINGS = [
+const CHARACTER_NAMES = theme.CHARACTER_NAMES || ["Dr. Petrovic", "Mira", "Mira Petrovic"];
+
+const GREETINGS = theme.GREETINGS || [
   { text: "Welcome back, Dr. Petrovic", sub: "Your dive logs are ready for review" },
   { text: "Good morning, Mira", sub: "The ROV footage finished processing" },
   { text: "Hey Mira", sub: "You left your annotations open" },
@@ -347,7 +350,7 @@ const GREETINGS = [
   { text: "Back for more footage?", sub: "We organized your recent views" },
 ];
 
-const INITIAL_FILES = [
+const INITIAL_FILES = theme.INITIAL_FILES || [
   { name: "Dive_4847_02-34-17.mp4", icon: "🎬" },
   { name: "Dive_4914_wall_contact.mp4", icon: "🎬" },
   { name: "Dive_4913_biolum_swarm.mp4", icon: "🎬" },
@@ -359,7 +362,7 @@ const INITIAL_FILES = [
   { name: "Paper_draft_midwater.docx", icon: "📝" },
 ];
 
-const REPLACEMENT_NAMES = [
+const REPLACEMENT_NAMES = theme.REPLACEMENT_NAMES || [
   "Recommended: Dive_4847_02-34-17.mp4",
   "Your most viewed",
   "Based on your research interests",
@@ -374,9 +377,9 @@ const REPLACEMENT_NAMES = [
   "Your unfinished annotations",
 ];
 
-const FILE_ICONS = ["📁", "📄", "🗂️", "📋", "📝", "🎬", "🎥", "📊", "🔬", "🐙"];
+const FILE_ICONS = theme.FILE_ICONS || ["📁", "📄", "🗂️", "📋", "📝", "🎬", "🎥", "📊", "🔬", "🐙"];
 
-const JOURNAL_MESSAGES = [
+const JOURNAL_MESSAGES = theme.JOURNAL_MESSAGES || [
   "We noticed you've watched Dive_4847_02-34-17.mp4 frequently. It's been moved to quick access.",
   "Your 'unidentified_specimen_47' folder was reorganized for easier reference.",
   "The grant proposal deadline is approaching. We've highlighted it for you.",
@@ -391,7 +394,7 @@ const JOURNAL_MESSAGES = [
   "Based on your behavior, you might want to revisit your paper draft soon.",
 ];
 
-const OBSESSION_MESSAGES = [
+const OBSESSION_MESSAGES = theme.OBSESSION_MESSAGES || [
   "Dive_4847_02-34-17.mp4 has been viewed 47 times. Would you like to watch it again?",
   "Your most-viewed file is ready. We know it's important to you.",
   "The unidentified specimen folder has grown. Your dedication is noted.",
@@ -399,7 +402,7 @@ const OBSESSION_MESSAGES = [
   "You've spent 23 hours on Dive 4847 footage this month. Personalized for your focus.",
 ];
 
-const APP_OPEN_REASONS = [
+const APP_OPEN_REASONS = theme.APP_OPEN_REASONS || [
   "Based on your research schedule",
   "You usually review footage around now",
   "Recommended by your viewing patterns",
@@ -414,7 +417,7 @@ const APP_OPEN_REASONS = [
 // MBARI IT DEPARTMENT MESSAGES
 // ============================================
 
-const IT_MESSAGES = {
+const IT_MESSAGES = theme.IT_MESSAGES || {
   security: [
     { icon: "⚠️", title: "Security Alert", message: "Files containing cetacean vocalizations require encryption per Policy 4.7.2. 3 files flagged.", priority: "warning" },
     { icon: "🔒", title: "Session Notice", message: "Your session will expire in 47 minutes. Please save all research data.", priority: "info" },
@@ -423,7 +426,7 @@ const IT_MESSAGES = {
     { icon: "⚠️", title: "Encryption Required", message: "specimen_47/ contains sensitive research data. Encryption pending approval.", priority: "warning" },
     { icon: "🔐", title: "Certificate Expiring", message: "Your MBARI research certificate expires in 14 days. Renew at it.mbari.org", priority: "info" },
   ],
-  
+
   restrictions: [
     { icon: "🚫", title: "Application Blocked", message: "Preview.app is not approved for research devices. Use MBARI Media Viewer instead.", priority: "error" },
     { icon: "🚫", title: "File Type Restricted", message: "Opening .raw files requires IT approval. Ticket #IT-4847 has been auto-generated.", priority: "error" },
@@ -431,7 +434,7 @@ const IT_MESSAGES = {
     { icon: "🚫", title: "USB Blocked", message: "External storage devices require pre-approval. Submit request at it.mbari.org/storage", priority: "error" },
     { icon: "⚠️", title: "Download Blocked", message: "File exceeds 500MB limit for unencrypted downloads. Use MBARI Secure Transfer.", priority: "warning" },
   ],
-  
+
   compliance: [
     { icon: "📋", title: "Training Required", message: "REMINDER: Complete Q1 Cybersecurity Training by Friday. 2 modules remaining.", priority: "info" },
     { icon: "📋", title: "Certification Expiring", message: "Annual Data Handling Certification expires in 3 days. Recertify at training.mbari.org", priority: "warning" },
@@ -439,7 +442,7 @@ const IT_MESSAGES = {
     { icon: "✅", title: "Compliance Check", message: "Your device meets current security standards. Next audit: Feb 15.", priority: "success" },
     { icon: "📋", title: "Export Control", message: "Reminder: Deep-sea specimen data may be subject to export control regulations.", priority: "info" },
   ],
-  
+
   network: [
     { icon: "⚠️", title: "VPN Unstable", message: "Connection to MBARI-SECURE is unstable. Research data sync paused.", priority: "warning" },
     { icon: "🔄", title: "Maintenance Scheduled", message: "Network maintenance tonight 02:00-04:00 PST. Save your work.", priority: "info" },
@@ -447,7 +450,7 @@ const IT_MESSAGES = {
     { icon: "📡", title: "Sync Paused", message: "Cloud sync paused due to network conditions. 12 files pending upload.", priority: "info" },
     { icon: "✅", title: "Connected", message: "Reconnected to MBARI-SECURE. Resuming data sync.", priority: "success" },
   ],
-  
+
   optimizations: [
     { icon: "✅", title: "Optimization Complete", message: "Your desktop has been optimized for compliance. Some files may have moved.", priority: "success" },
     { icon: "✅", title: "Storage Recovered", message: "Temporary files cleared. 2.3GB recovered. Old dive logs archived.", priority: "success" },

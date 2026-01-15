@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Living OS</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <!-- Handwritten fonts for experimental text -->
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Kalam:wght@300;400;700&family=Permanent+Marker&family=Shadows+Into+Light&display=swap" rel="stylesheet">
+  <!-- Unsettling/digital fonts for background messages -->
+  <link href="https://fonts.googleapis.com/css2?family=Creepster&family=VT323&family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=New+Rocker&display=swap" rel="stylesheet">
+  <style>
+    /* Self-hosted fonts */
+    @font-face {
+      font-family: 'Anger Management';
+      src: url('fonts/Anger Management.otf') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    @font-face {
+      font-family: 'Byron Mark I';
+      src: url('fonts/Byron Mark I.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      /* Organic growth colors */
+      --growth-green: #4a7c59;
+      --growth-dark: #2d4a35;
+      --growth-light: #6b9c7a;
+      --root-brown: #5a4a3a;
+      --root-dark: #3a2e22;
+      --mycelium-purple: #6b4c7a;
+      --mycelium-dark: #4a2d4a;
+      
+      /* Hunger states */
+      --hunger-satiated: rgba(74, 124, 89, 0.3);
+      --hunger-hungry: rgba(107, 76, 122, 0.5);
+      --hunger-starving: rgba(184, 92, 58, 0.7);
+      
+      /* Text */
+      --text-primary: rgba(40, 40, 40, 0.95);
+      --text-secondary: rgba(60, 60, 60, 0.7);
+      --text-muted: rgba(100, 100, 100, 0.5);
+      --text-warning: rgba(200, 150, 50, 0.9);
+      --text-danger: rgba(200, 80, 80, 0.9);
+      
+      /* Background */
+      --bg-light: #f5f5f0;
+      --bg-mid: #e8e8e3;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: #f5f5f0;
+      overflow: hidden;
+      height: 100vh;
+      position: relative;
+    }
+
+    /* Desktop with organic overlay */
+    .desktop {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      padding: 30px;
+      padding-bottom: 120px;
+      background: 
+        /* Light, organic base */
+        linear-gradient(135deg, #f8f8f3 0%, #f0f0eb 50%, #e8e8e3 100%),
+        /* Subtle organic patterns */
+        radial-gradient(ellipse at 20% 30%, rgba(180, 220, 180, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 70%, rgba(200, 230, 200, 0.08) 0%, transparent 40%),
+        /* Paper-like texture */
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(0, 0, 0, 0.02) 2px,
+          rgba(0, 0, 0, 0.02) 4px
+        );
+      overflow: hidden;
+    }
+
+    /* Animated background pattern - subtle organic movement */
+    .desktop::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: 
+        radial-gradient(circle at 30% 40%, rgba(150, 200, 150, 0.15) 0%, transparent 30%),
+        radial-gradient(circle at 70% 60%, rgba(180, 220, 180, 0.12) 0%, transparent 25%);
+      animation: patternDrift 20s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes patternDrift {
+      0%, 100% { 
+        transform: translate(0, 0);
+        opacity: 0.6;
+      }
+      50% { 
+        transform: translate(20px, -15px);
+        opacity: 0.8;
+      }
+    }
+
+    /* Subtle grid pattern overlay */
+    .desktop::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.5;
+    }
+
+
+    /* Talk to the Beast toggle */
+    .talk-to-beast-toggle {
+      position: absolute;
+      top: 30px;
+      right: 30px;
+      z-index: 25;
+      background: rgba(255, 255, 255, 0.95);
+      border: 2px solid rgba(74, 124, 89, 0.3);
+      border-radius: 24px;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .talk-to-beast-toggle:hover {
+      background: rgba(255, 255, 255, 1);
+      border-color: rgba(74, 124, 89, 0.5);
+    }
+
+    .talk-to-beast-toggle .toggle-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(74, 124, 89, 0.2);
+      transition: all 0.3s ease;
+      box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .talk-to-beast-toggle.active {
+      background: rgba(74, 124, 89, 0.15);
+      border-color: rgba(74, 124, 89, 0.8);
+      color: var(--text-primary);
+    }
+
+    .talk-to-beast-toggle.active .toggle-indicator {
+      background: rgba(74, 124, 89, 0.8);
+      box-shadow: 0 0 8px rgba(74, 124, 89, 0.5), inset 0 0 4px rgba(74, 124, 89, 0.3);
+    }
+
+    /* Growth indicator - looks like normal system status */
+    #hunger-indicator {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      width: 200px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      overflow: hidden;
+      z-index: 100;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    #hunger-bar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, var(--hunger-satiated) 0%, var(--hunger-hungry) 50%, var(--hunger-starving) 100%);
+      transition: width 0.3s ease;
+      position: relative;
+    }
+
+    #hunger-bar::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
+    }
+
+    #hunger-label {
+      position: absolute;
+      top: -20px;
+      left: 0;
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    /* OS notifications - standard */
+    .os-notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid var(--growth-green);
+      border-left: 4px solid var(--growth-green);
+      border-radius: 4px;
+      padding: 12px 16px;
+      font-size: 11px;
+      color: var(--text-primary);
+      z-index: 1000;
+      max-width: 300px;
+      animation: notificationSlide 0.3s ease;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Digital typography background messages */
+    .background-message-typography {
+      opacity: 0;
+      animation: typographyFadeIn 1s ease forwards;
+      white-space: nowrap;
+      letter-spacing: 0.05em;
+    }
+
+    @keyframes typographyFadeIn {
+      0% {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animated-letter {
+      display: inline-block;
+      position: relative;
+      will-change: transform, opacity;
+      transition: transform 0.1s ease-out, opacity 0.2s ease-out;
+    }
+
+    /* Glitch effect for some styles */
+    .background-message-typography.scrawled .animated-letter {
+      text-shadow: 
+        1px 0 0 rgba(80, 60, 40, 0.3),
+        -1px 0 0 rgba(80, 60, 40, 0.3);
+    }
+
+    /* Subtle glow for hand-drawn */
+    .background-message-typography.hand-drawn .animated-letter {
+      text-shadow: 0 0 3px rgba(60, 60, 60, 0.2);
+    }
+
+    .os-notification.hungry {
+      border-color: var(--hunger-hungry);
+      border-left-color: var(--hunger-hungry);
+    }
+
+    .os-notification.starving {
+      border-color: var(--hunger-starving);
+      border-left-color: var(--hunger-starving);
+      animation: notificationPulse 2s ease infinite;
+    }
+
+    @keyframes notificationSlide {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes notificationPulse {
+      0%, 100% { border-left-color: var(--hunger-starving); }
+      50% { border-left-color: rgba(255, 100, 100, 1); }
+    }
+
+    /* Chaos mode notification slide-in */
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Glitch effects when starving */
+    .desktop.glitching {
+      animation: glitch 0.3s infinite;
+    }
+
+    @keyframes glitch {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-2px); }
+      75% { transform: translateX(2px); }
+    }
+
+    /* File icons - can be consumed */
+    .file-icon {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: grab;
+      transition: all 0.4s ease;
+      user-select: none;
+      z-index: 3;
+      pointer-events: auto;
+    }
+
+    .file-icon:hover {
+      transform: scale(1.1);
+    }
+
+    .file-icon:active {
+      cursor: grabbing;
+    }
+
+    .file-icon.consuming {
+      pointer-events: none;
+      z-index: 1000;
+      /* Animation handled by JavaScript for dragging effect */
+    }
+
+    /* Line drawings canvas overlay */
+    #line-drawings-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+      opacity: 0.6;
+    }
+
+    /* Plant effects canvas overlay */
+    #plant-effects-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.7;
+    }
+
+    .file-icon .icon {
+      width: 60px;
+      height: 60px;
+      background: radial-gradient(
+        circle at 40% 40%,
+        rgba(74, 124, 89, 0.2) 0%,
+        rgba(200, 230, 200, 0.1) 50%,
+        rgba(255, 255, 255, 0.8) 100%
+      );
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      border: 1px solid rgba(74, 124, 89, 0.2);
+      margin-bottom: 10px;
+      position: relative;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .file-icon .icon::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, transparent 0%, rgba(74, 124, 89, 0.1) 100%);
+      border-radius: 8px;
+      animation: iconPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes iconPulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    .file-icon .label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 140px;
+      letter-spacing: 0.05em;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+
+    /* Files container */
+    #files-container {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Windows container */
+    #windows-container {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* Window styling - clean, research-focused */
+    .window {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid rgba(74, 124, 89, 0.3);
+      border-radius: 6px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      min-width: 280px;
+      min-height: 200px;
+      z-index: 10;
+      pointer-events: auto;
+    }
+
+    .window.glitching {
+      animation: windowGlitch 0.2s infinite;
+    }
+
+    @keyframes windowGlitch {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(1px); }
+    }
+
+    .window-header {
+      background: linear-gradient(180deg, rgba(240, 250, 240, 0.9) 0%, rgba(230, 240, 230, 0.8) 100%);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid rgba(74, 124, 89, 0.2);
+      cursor: grab;
+    }
+
+    .window-header:active {
+      cursor: grabbing;
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 6px;
+    }
+
+    .window-control {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .control-close {
+      background: rgba(255, 100, 100, 0.7);
+    }
+
+    .control-close:hover {
+      background: rgba(255, 100, 100, 1);
+    }
+
+    .window-title {
+      flex: 1;
+      font-size: 12px;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    /* Journal window */
+    .journal-window {
+      width: 400px;
+      height: 500px;
+      position: absolute;
+      top: 100px;
+      left: 50px;
+    }
+
+    .journal-content {
+      padding: 16px;
+      overflow-y: auto;
+      height: calc(100% - 50px);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .journal-entries {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Nature Viewer - Field observation window */
+    .nature-viewer {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid rgba(74, 124, 89, 0.3);
+      border-radius: 6px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+      width: 480px;
+      height: 400px;
+      z-index: 20;
+      pointer-events: auto;
+      top: 60px;
+      right: 60px;
+    }
+
+    .nature-viewer-header {
+      background: linear-gradient(180deg, rgba(240, 250, 240, 0.9) 0%, rgba(230, 240, 230, 0.8) 100%);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(74, 124, 89, 0.2);
+      cursor: grab;
+      user-select: none;
+    }
+
+    .nature-viewer-title {
+      font-size: 12px;
+      color: var(--text-primary);
+      font-weight: 500;
+      letter-spacing: 0.05em;
+    }
+
+    .nature-viewer-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nature-viewer-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 4px 8px;
+      transition: color 0.2s;
+    }
+
+    .nature-viewer-close:hover {
+      color: var(--text-primary);
+    }
+
+    .nature-canvas {
+      display: block;
+      width: 100%;
+      height: calc(100% - 44px);
+      background: white;
+    }
+
+    .nature-viewer-resize {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 20px;
+      height: 20px;
+      cursor: se-resize;
+      background: linear-gradient(135deg, transparent 0%, transparent 50%, rgba(74, 124, 89, 0.3) 50%, rgba(74, 124, 89, 0.3) 100%);
+      border-radius: 0 0 6px 0;
+    }
+
+    .nature-viewer-resize:hover {
+      background: linear-gradient(135deg, transparent 0%, transparent 50%, rgba(74, 124, 89, 0.6) 50%, rgba(74, 124, 89, 0.6) 100%);
+    }
+
+    .journal-entry {
+      padding: 10px;
+      background: rgba(74, 124, 89, 0.05);
+      border-left: 2px solid rgba(74, 124, 89, 0.3);
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      transition: all 0.3s ease;
+    }
+
+    .journal-entry.new {
+      animation: entryAppear 0.5s ease forwards;
+      border-left-color: rgba(74, 124, 89, 0.6);
+    }
+
+    @keyframes entryAppear {
+      from { opacity: 0; transform: translateX(10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .journal-entry .time {
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      display: block;
+      letter-spacing: 0.05em;
+    }
+
+    /* Mobile-friendly adjustments - prevent broken layout */
+    @media (max-width: 768px) {
+      /* Reduce desktop padding */
+      .desktop {
+        padding: 10px;
+        padding-bottom: 100px;
+      }
+
+      /* Talk to the Beast toggle - adjust for mobile */
+      .talk-to-beast-toggle {
+        top: 10px !important;
+        right: 10px !important;
+        padding: 6px 12px;
+        font-size: 10px;
+      }
+
+      /* Ensure file icons stay within bounds and are touch-friendly */
+      .file-icon {
+        transform: scale(0.8);
+        /* Constrain to viewport */
+        max-width: calc(100vw - 20px);
+        max-height: calc(100vh - 20px);
+      }
+
+      /* Reposition file icons that are off-screen */
+      .file-icon {
+        min-width: 80px;
+      }
+
+      .file-icon .icon {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+      }
+
+      .file-icon .label {
+        font-size: 10px;
+        max-width: 90px;
+        line-height: 1.2;
+      }
+
+      /* Windows take more space on mobile */
+      .window {
+        min-width: calc(100vw - 20px) !important;
+        max-width: calc(100vw - 20px) !important;
+        min-height: 300px;
+        left: 10px !important;
+        right: 10px !important;
+      }
+
+      .journal-window {
+        width: calc(100vw - 20px) !important;
+        height: calc(100vh - 80px) !important;
+        top: 40px !important;
+        left: 10px !important;
+      }
+
+      .window-header {
+        padding: 16px; /* Larger touch target */
+        min-height: 48px; /* Minimum touch target size */
+      }
+
+      .window-control {
+        width: 20px; /* Larger touch target */
+        height: 20px;
+        min-width: 20px;
+        min-height: 20px;
+      }
+
+      .window-title {
+        font-size: 14px; /* More readable */
+      }
+
+      .journal-content {
+        font-size: 14px; /* More readable on mobile */
+        padding: 16px;
+      }
+
+      .journal-entry {
+        font-size: 13px;
+        padding: 12px;
+      }
+
+      /* Greeting text adjustments - reposition for mobile */
+      .greeting {
+        font-size: 13px;
+        padding: 15px;
+        max-width: calc(100vw - 20px);
+        top: 10px !important;
+        right: 10px !important;
+        left: 10px !important;
+        position: relative;
+        margin-bottom: 10px;
+      }
+
+      /* Background messages - reposition and resize */
+      .background-message-typography {
+        font-size: 16px;
+        max-width: calc(100vw - 30px);
+        padding: 12px 14px;
+        left: 15px !important;
+        right: 15px !important;
+        /* Ensure messages don't go off-screen */
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+      }
+
+      .background-message-typography .animated-letter {
+        font-size: 16px;
+      }
+
+      /* Hunger indicator adjustments - ensure it's visible */
+      #hunger-indicator {
+        bottom: 15px !important;
+        left: 10px !important;
+        right: 10px !important;
+        width: auto !important;
+        max-width: calc(100vw - 20px);
+      }
+
+      #hunger-label {
+        font-size: 11px;
+        margin-bottom: 6px;
+      }
+
+      #hunger-bar {
+        height: 8px;
+      }
+
+      /* Notifications - reposition for mobile */
+      .os-notification {
+        top: 10px !important;
+        right: 10px !important;
+        left: 10px !important;
+        max-width: calc(100vw - 20px) !important;
+        font-size: 12px;
+        padding: 14px;
+      }
+
+      /* Prevent text overflow */
+      * {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+
+      /* Disable hover effects on mobile (they can stick) */
+      .file-icon:hover {
+        transform: scale(0.8); /* Same as base, no hover effect */
+      }
+
+      /* Ensure no horizontal scroll */
+      body {
+        overflow-x: hidden;
+      }
+
+      .desktop {
+        overflow-x: hidden;
+      }
+    }
+
+    /* Very small screens (phones in portrait) */
+    @media (max-width: 480px) {
+      .desktop {
+        padding: 8px;
+        padding-bottom: 90px;
+      }
+
+      .file-icon {
+        transform: scale(0.7);
+        min-width: 70px;
+      }
+
+      .file-icon .icon {
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+      }
+
+      .file-icon .label {
+        font-size: 9px;
+        max-width: 75px;
+      }
+
+      .window {
+        min-width: calc(100vw - 16px) !important;
+        max-width: calc(100vw - 16px) !important;
+        left: 8px !important;
+        right: 8px !important;
+      }
+
+      .journal-window {
+        width: calc(100vw - 16px) !important;
+        height: calc(100vh - 70px) !important;
+        left: 8px !important;
+        top: 30px !important;
+      }
+
+      .window-header {
+        padding: 14px;
+      }
+
+      .window-control {
+        width: 18px;
+        height: 18px;
+      }
+
+      .background-message-typography {
+        font-size: 14px;
+        padding: 10px 12px;
+        left: 8px !important;
+        right: 8px !important;
+      }
+
+      .background-message-typography .animated-letter {
+        font-size: 14px;
+      }
+
+      .greeting {
+        font-size: 11px;
+        padding: 12px;
+        top: 8px !important;
+        right: 8px !important;
+        left: 8px !important;
+      }
+
+      .os-notification {
+        top: 8px !important;
+        right: 8px !important;
+        left: 8px !important;
+        max-width: calc(100vw - 16px) !important;
+        font-size: 11px;
+        padding: 12px;
+      }
+
+      #hunger-indicator {
+        bottom: 10px !important;
+        left: 8px !important;
+        right: 8px !important;
+        max-width: calc(100vw - 16px);
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="desktop" id="desktop">
+    <!-- Greeting -->
+    <div class="greeting" style="position: absolute; top: 30px; left: 30px; font-size: 18px; color: var(--text-primary); z-index: 5; font-weight: 300;">
+      <div>Field Station OS</div>
+      <div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px; font-weight: 300;">Dr. Bianca Rios - Plant Biology Research</div>
+    </div>
+
+    <!-- Talk to the Beast toggle -->
+    <button id="talk-to-beast-toggle" class="talk-to-beast-toggle" onclick="toggleTalkToTheBeast()">
+      <span class="toggle-indicator"></span>
+      <span class="toggle-label">Talk to the Beast</span>
+    </button>
+
+    <!-- Background messages container -->
+    <div id="background-messages-container"></div>
+    
+    <!-- Line drawings overlay (canvas for simple line art) -->
+    <canvas id="line-drawings-canvas"></canvas>
+    
+    <!-- Plant-based visual effects overlay -->
+    <canvas id="plant-effects-canvas"></canvas>
+
+    <!-- Creative canvas for interactive drawing -->
+    <canvas id="creativeCanvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none;"></canvas>
+
+    <!-- Nature Viewer - Field notes style observation window -->
+    <div id="nature-viewer" class="nature-viewer" style="display: none;">
+      <div class="nature-viewer-header">
+        <div class="nature-viewer-title">Field Notes</div>
+        <div class="nature-viewer-controls">
+          <button class="nature-viewer-close" onclick="closeNatureViewer()">✕</button>
+        </div>
+      </div>
+      <canvas id="nature-canvas" class="nature-canvas"></canvas>
+      <!-- Resize handle -->
+      <div class="nature-viewer-resize"></div>
+    </div>
+
+    <!-- Files container -->
+    <div id="files-container"></div>
+    
+    <!-- Windows container -->
+    <div id="windows-container">
+      <!-- Journal window (initially hidden, can be opened) -->
+      <div id="journal-window" class="window journal-window" style="display: none;">
+        <div class="window-header">
+          <div class="window-controls">
+            <div class="window-control control-close" onclick="closeWindow('journal-window')"></div>
+          </div>
+          <div class="window-title">System Log</div>
+        </div>
+        <div class="journal-content">
+          <div id="journal-entries" class="journal-entries"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Growth indicator (subtle, looks like system status) -->
+    <div id="hunger-indicator" style="opacity: 0.3;">
+      <div id="hunger-label">System Status</div>
+      <div id="hunger-bar"></div>
+    </div>
+  </div>
+
+  <!-- Rough.js for sketchy hand-drawn graphics -->
+  <script src="https://unpkg.com/roughjs@4.6.6/bundled/rough.js"></script>
+  <!-- Typography Toolkit - Letter-by-letter animations (latest) -->
+  <script src="https://unpkg.com/typography-toolkit@latest/dist/typography-toolkit.umd.js"></script>
+  <!-- Visual Toolkit Library - Living OS Theme (v2.1.4+, local) -->
+  <script src="../../visual-toolkit.min.js"></script>
+  <!-- Creative Toolkit - Interactive drawing canvas (local) -->
+  <script src="../../creative-toolkit.min.js"></script>
+  <!-- Music Playground Library - Living OS Theme (UMD build) -->
+  <!-- Using @latest to get v2.3.0+ with organic audio improvements -->
+  <script src="https://unpkg.com/music-playground@latest/dist/music-playground.umd.js"></script>
+  <script src="os.js"></script>
+</body>
+</html>

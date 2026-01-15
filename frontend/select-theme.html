@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Narrative OS - Select Experience</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: #0a0a0f;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #e0e0e0;
+    }
+
+    .container {
+      text-align: center;
+      max-width: 900px;
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 300;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.1em;
+      color: #fff;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 3rem;
+      letter-spacing: 0.05em;
+    }
+
+    .themes {
+      display: flex;
+      gap: 40px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .theme-card {
+      width: 320px;
+      background: #12121a;
+      border: 1px solid #2a2a3a;
+      border-radius: 12px;
+      padding: 30px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .theme-card:hover {
+      transform: translateY(-5px);
+      border-color: #4a4a6a;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .theme-card.deep-sea:hover {
+      border-color: #4dd0e1;
+      box-shadow: 0 10px 40px rgba(77, 208, 225, 0.2);
+    }
+
+    .theme-card.living-os:hover {
+      border-color: #6b9c7a;
+      box-shadow: 0 10px 40px rgba(107, 156, 122, 0.2);
+    }
+
+    .theme-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .theme-name {
+      font-size: 1.3rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.05em;
+    }
+
+    .theme-card.deep-sea .theme-name {
+      color: #4dd0e1;
+    }
+
+    .theme-card.living-os .theme-name {
+      color: #6b9c7a;
+    }
+
+    .theme-character {
+      font-size: 0.85rem;
+      color: #888;
+      margin-bottom: 1rem;
+    }
+
+    .theme-description {
+      font-size: 0.8rem;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .theme-badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-top: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .theme-card.deep-sea .theme-badge {
+      background: rgba(77, 208, 225, 0.15);
+      color: #4dd0e1;
+    }
+
+    .theme-card.living-os .theme-badge {
+      background: rgba(107, 156, 122, 0.15);
+      color: #6b9c7a;
+    }
+
+    .footer {
+      margin-top: 3rem;
+      font-size: 0.7rem;
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>NARRATIVE OS</h1>
+    <p class="subtitle">Select your experience</p>
+
+    <div class="themes">
+      <a href="index.html" class="theme-card deep-sea">
+        <div class="theme-icon">🌊</div>
+        <div class="theme-name">Deep Sea</div>
+        <div class="theme-character">Dr. Mira Petrovic</div>
+        <div class="theme-description">
+          A marine biologist at MBARI, obsessively reviewing ROV footage from Dive 4847.
+          The operating system knows too much about her research patterns.
+        </div>
+        <div class="theme-badge">Default Experience</div>
+      </a>
+
+      <a href="themes/living-os/index.html" class="theme-card living-os">
+        <div class="theme-icon">🌿</div>
+        <div class="theme-name">Living OS</div>
+        <div class="theme-character">Dr. Bianca Rios</div>
+        <div class="theme-description">
+          A plant biologist at a field station. The operating system is slowly revealing
+          that it's alive, growing, and hungry for your data.
+        </div>
+        <div class="theme-badge">Prototype</div>
+      </a>
+    </div>
+
+    <p class="footer">Each experience is a complete, self-contained narrative</p>
+  </div>
+</body>
+</html>

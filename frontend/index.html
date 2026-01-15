@@ -2455,6 +2455,11 @@
       window.AudioEngine = window.MusicPlayground;
     }
   </script>
+  <!-- Core infrastructure (loaded first, sets window.OSCore) -->
+  <script src="core/os-core.js"></script>
+  <!-- Theme configuration (sets window.DeepSeaTheme) -->
+  <script src="themes/deep-sea/config.js"></script>
+  <!-- Main OS (uses core and theme if available, or runs standalone) -->
   <script src="os.js"></script>
 </body>
 </html>
