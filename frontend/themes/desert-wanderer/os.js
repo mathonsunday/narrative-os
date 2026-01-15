@@ -60,11 +60,16 @@
   // ============================================
 
   function initializeFiles() {
-    if (!Core.state) return;
+    const container = document.getElementById('files-container');
+    if (!container) return;
 
     const initialFiles = Theme.initialFiles || [
       { name: 'field_notes.txt', icon: '📝', type: 'file' },
       { name: 'excavation_logs/', icon: '⛏️', type: 'directory' },
+      { name: 'artifact_catalog.xlsx', icon: '🗿', type: 'file' },
+      { name: 'geological_surveys/', icon: '🪨', type: 'directory' },
+      { name: 'expedition_photos/', icon: '📸', type: 'directory' },
+      { name: 'research_findings.pdf', icon: '🔬', type: 'file' },
     ];
 
     initialFiles.forEach((file, index) => {
@@ -74,7 +79,7 @@
         50 + (index % 3) * 120,
         180 + Math.floor(index / 3) * 140
       );
-      document.getElementById('files-container')?.appendChild(fileEl);
+      container.appendChild(fileEl);
     });
   }
 
