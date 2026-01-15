@@ -166,7 +166,7 @@
     dust.style.width = '80px';
     dust.style.height = '80px';
     dust.style.borderRadius = '50%';
-    dust.style.background: 'radial-gradient(circle, rgba(212,165,116,0.8) 0%, rgba(212,165,116,0) 100%)';
+    dust.style.background = 'radial-gradient(circle, rgba(212,165,116,0.8) 0%, rgba(212,165,116,0) 100%)';
     dust.style.zIndex = '999';
     dust.style.pointerEvents = 'none';
     dust.style.animation = 'dust-rise 1.5s ease-out forwards';
