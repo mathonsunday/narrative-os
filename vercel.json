@@ -1,0 +1,22 @@
+{
+  "buildCommand": "npm install",
+  "outputDirectory": "frontend",
+  "public": true,
+  "routes": [
+    {
+      "src": "^/(?!.*\\.(js|css|png|jpg|jpeg|gif|ico|woff|woff2|ttf|eot|svg|mp3|mp4|wav)).*$",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/select-theme.html",
+      "dest": "/select-theme.html"
+    },
+    {
+      "src": "/themes/(.*)",
+      "dest": "/themes/$1"
+    }
+  ],
+  "env": {
+    "BUILD_ENV": "production"
+  }
+}

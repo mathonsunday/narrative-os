@@ -83,9 +83,31 @@ docker-compose up --build
 
 The frontend is vanilla JavaScript with Canvas API. The backend is Python with WebSocket support.
 
+## Themes
+
+The system now supports multiple independent themes, each with unique narratives and mechanics:
+
+- **Deep Sea OS** (Default) - Dr. Mira Petrovic exploring ROV footage
+- **Living OS** - Dr. Bianca Rios discovering plant consciousness
+- **Pixel Witch** - Cecilia the cottage witch brewing potions
+- **Desert Wanderer** - Alex the archaeologist exploring ancient ruins
+
+All themes share the same core infrastructure but provide completely different experiences.
+
+### Accessing Themes
+
+- **Default (Deep Sea):** `http://localhost:8000/frontend/index.html`
+- **Theme Selector:** `http://localhost:8000/frontend/select-theme.html`
+- **Individual Themes:**
+  - Living OS: `/frontend/themes/living-os/index.html`
+  - Pixel Witch: `/frontend/themes/pixel-witch/index.html`
+  - Desert Wanderer: `/frontend/themes/desert-wanderer/index.html`
+
 ## Architecture
 
 - **Frontend**: Vanilla JavaScript, Canvas API, Web Audio API
+- **Core Infrastructure**: Shared OS utilities (WebSocket, file management, UI primitives)
+- **Themes**: Independent implementations with unique narratives and mechanics
 - **Backend**: Python with WebSocket server
 - **Containerization**: Docker for isolated filesystem
 - **Visual Library**: [visual-toolkit](https://github.com/mathonsunday/visual-toolkit)
@@ -96,17 +118,51 @@ The frontend is vanilla JavaScript with Canvas API. The backend is Python with W
 ```
 narrative-os/
 ├── frontend/
-│   ├── index.html          # Main UI
-│   ├── os.js              # Frontend logic
-│   ├── audio-engine.js     # Audio system
-│   └── visual-toolkit.min.js  # Visual effects library
+│   ├── index.html                  # Main UI (Deep Sea - default)
+│   ├── select-theme.html           # Theme selector
+│   ├── core/
+│   │   └── os-core.js              # Shared core infrastructure
+│   ├── themes/
+│   │   ├── deep-sea/
+│   │   │   ├── index.html
+│   │   │   ├── os.js
+│   │   │   └── config.js
+│   │   ├── living-os/
+│   │   │   ├── index.html
+│   │   │   ├── os.js
+│   │   │   └── config.js
+│   │   ├── pixel-witch/
+│   │   │   ├── index.html
+│   │   │   ├── os.js
+│   │   │   └── config.js
+│   │   └── desert-wanderer/
+│   │       ├── index.html
+│   │       ├── os.js
+│   │       └── config.js
+│   ├── os.js                       # Deep Sea main logic
+│   ├── audio-engine.js             # Audio system
+│   └── visual-toolkit.min.js       # Visual effects library
 ├── backend/
 │   ├── server/
-│   │   └── main.py        # WebSocket server
-│   ├── daemons/           # Background processes
-│   └── filesystem/        # Real filesystem root
-└── docker-compose.yml     # Container orchestration
+│   │   └── main.py                 # WebSocket server
+│   ├── daemons/                    # Background processes
+│   └── filesystem/                 # Real filesystem root
+├── tests/                          # Test suite (129 tests)
+├── vercel.json                     # Deployment configuration
+├── DEPLOYMENT.md                   # Deployment strategy
+├── THEME_DEVELOPMENT.md            # How to create themes
+└── docker-compose.yml              # Container orchestration
 ```
+
+## Deployment
+
+The system is configured for Vercel deployment with Deep Sea OS as the default public experience:
+
+- **Public URL** (`/`): Deep Sea OS
+- **Theme Selector** (`/select-theme.html`): Available for discovery
+- **Other Themes**: Accessible via direct URLs
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment configuration.
 
 ## Credits
 
