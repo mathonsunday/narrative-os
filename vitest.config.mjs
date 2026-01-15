@@ -16,6 +16,7 @@ export default defineConfig({
       exclude: [
         'node_modules/',
         'tests/',
+        'prototypes/',
         '**/*.test.mjs',
         '**/*.spec.mjs'
       ]
