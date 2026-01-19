@@ -1,0 +1,24 @@
+{
+  "entry": [
+    "src/index.ts"
+  ],
+  "project": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "ignore": [
+    "dist/**",
+    "build/**",
+    "node_modules/**",
+    "**/*.d.ts",
+    "**/node_modules/**",
+    ".next/**",
+    "out/**",
+    "coverage/**",
+    ".git/**"
+  ],
+  "ignoreDependencies": [
+    "@types/node",
+    "typescript"
+  ]
+}

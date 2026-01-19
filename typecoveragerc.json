@@ -1,0 +1,26 @@
+{
+  "files": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "ignore": [
+    "dist/**",
+    "build/**",
+    "node_modules/**",
+    "**/*.d.ts",
+    "**/node_modules/**",
+    ".next/**",
+    "out/**",
+    "coverage/**",
+    ".git/**"
+  ],
+  "ignoreFiles": [
+    "**/*.d.ts",
+    "**/node_modules/**"
+  ],
+  "ignoreCatch": true,
+  "skipLibCheck": true,
+  "checkPropertyAccess": true,
+  "strict": true,
+  "suppressError": false
+}

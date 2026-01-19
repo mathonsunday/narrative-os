@@ -10,19 +10,32 @@
     "test:coverage": "vitest run --coverage",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
-    "e2e:debug": "playwright test --debug"
+    "e2e:debug": "playwright test --debug",
+    "dead-code": "knip",
+    "dead-code:fix": "knip --fix",
+    "dead-code:analyze": "dead-code-toolkit analyze",
+    "type:coverage": "type-coverage --detail --strict",
+    "type:report": "typescript-coverage-report",
+    "verify": "npm run type-check && npm run lint && npm run dead-code && npm test"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@commitlint/cli": "^20.3.1",
+    "@commitlint/config-conventional": "^20.3.1",
     "@playwright/test": "^1.57.0",
     "@vitest/ui": "^4.0.17",
     "happy-dom": "^20.1.0",
+    "husky": "^9.1.7",
     "jsdom": "^27.4.0",
+    "knip": "^5.82.1",
+    "lint-staged": "^16.2.7",
     "mock-socket": "^9.3.1",
     "pixelmatch": "^7.1.0",
     "playwright": "^1.57.0",
+    "type-coverage": "^2.29.7",
+    "typescript-coverage-report": "^1.1.1",
     "vitest": "^4.0.17"
   },
   "dependencies": {
